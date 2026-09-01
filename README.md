@@ -81,6 +81,21 @@ Vendor subdomains only support TXT records and require ownership of the base sub
 
 Report abuse by opening an issue in this repository.
 
+### If your subdomain stopped resolving
+
+We disable subdomains we believe are being used for phishing, brand impersonation,
+malware distribution, or copyright-infringing streaming. Disabled records are moved
+to [`disabled/`](./disabled) — **they are not deleted**, and restoring one is a single
+file move.
+
+**We may be wrong.** If yours was disabled and you think that is a mistake, open an
+issue and say so. We will restore it. You do not have to explain what your site is
+for or prove anything; tell us the name and that you disagree.
+
+Our default is to leave things alone when a case is unclear. Disabling is meant to be
+reversible, and we would rather restore a few we should not have touched than leave a
+mistake standing.
+
 ## License
 
 [MIT](./LICENSE)
