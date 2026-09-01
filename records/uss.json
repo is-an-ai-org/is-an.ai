@@ -1,0 +1,17 @@
+{
+   "description": "Server",
+   "owner": {
+      "github_username": "TZXcpev46R_PUu-PrX1WR",
+      "email": "Crawford Rempel@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "104.18.10.143"
+      },
+      {
+         "type": "A",
+         "value": "104.18.11.143"
+      }
+   ]
+}

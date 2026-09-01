@@ -1,0 +1,13 @@
+{
+   "description": "服务器网站，我想建设",
+   "owner": {
+      "github_username": "jOujHGShEm_R5wCmhglHl",
+      "email": "gemoluoji@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "103.48.169.123"
+      }
+   ]
+}

@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "z5Ad3F2ze0FKAKjsgxIDD",
+      "email": "Qwi2qRNjm@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "four0811.frank.elementfx.com"
+      }
+   ]
+}

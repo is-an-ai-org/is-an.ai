@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "j7EUjzRxutrQbzXdrrg9V",
+      "email": "seongmock@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "152.69.200.150"
+      },
+      {
+         "type": "CNAME",
+         "value": "mogggingo2.duckdns.org"
+      }
+   ]
+}

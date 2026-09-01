@@ -1,0 +1,21 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "oTFbRUrdRAdCKiR3MJshM",
+      "email": "he721521@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "e7156fcbe3513a0f.vercel-dns-017.com"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=vip520.is-an.ai,60034e2aa4b6708ad67d"
+      },
+      {
+         "type": "TXT",
+         "value": "_vercelvip520.is-an.ai"
+      }
+   ]
+}

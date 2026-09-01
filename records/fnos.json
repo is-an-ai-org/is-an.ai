@@ -1,0 +1,13 @@
+{
+   "description": "fnos",
+   "owner": {
+      "github_username": "7RxU59EUynTMkfzWMsqrQ",
+      "email": "abcpython@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "50.50.50.50"
+      }
+   ]
+}

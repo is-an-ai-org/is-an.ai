@@ -1,0 +1,17 @@
+{
+   "description": "cdn用",
+   "owner": {
+      "github_username": "tHRIgPWqNgOUbNsk9yPHE",
+      "email": "wangxiaoke122@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "49.238.238.143"
+      },
+      {
+         "type": "A",
+         "value": "185.207.196.132"
+      }
+   ]
+}

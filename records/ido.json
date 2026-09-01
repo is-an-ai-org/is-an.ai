@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "mBXQ1pjmT6578r58gAbKb",
+      "email": "Missu@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "uvimgtawgjzx.ap-northeast-1.clawcloudrun.com"
+      }
+   ]
+}

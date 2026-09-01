@@ -1,0 +1,25 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "j9Z9Ap8HIaFEQ32awgQbL",
+      "email": "Zahi@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "185.199.108.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.109.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.110.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.111.153"
+      }
+   ]
+}

@@ -1,0 +1,13 @@
+{
+   "description": "vip web",
+   "owner": {
+      "github_username": "wfphJyfO2NCuUXBs3iucm",
+      "email": "hakd-code@noreply.com"
+   },
+   "record": [
+      {
+         "type": "AAAA",
+         "value": "2001:41d0:0303:643d:0000:0000:04c7:b145"
+      }
+   ]
+}

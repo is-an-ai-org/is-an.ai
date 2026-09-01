@@ -1,0 +1,13 @@
+{
+   "description": "this is my first ai domain",
+   "owner": {
+      "github_username": "VFjP-VId4H3qc5JCEAwwI",
+      "email": "Zhu Junwei@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "www.900198.xyz"
+      }
+   ]
+}

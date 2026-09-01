@@ -1,0 +1,13 @@
+{
+   "description": "sjtv",
+   "owner": {
+      "github_username": "vEe9xbpaXMpn3s14apWkp",
+      "email": "AngelMr8@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "moontv-93j.pages.dev"
+      }
+   ]
+}

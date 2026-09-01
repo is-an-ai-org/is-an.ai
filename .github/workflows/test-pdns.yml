@@ -1,0 +1,73 @@
+name: Test PowerDNS Connection
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test type (list, zone, record)"
+        required: false
+        default: "list"
+        type: choice
+        options:
+          - list
+          - zone
+          - record
+      zone:
+        description: "Zone name (for zone/record test)"
+        required: false
+        type: string
+      subdomain:
+        description: "Subdomain (for record test, use @ for root)"
+        required: false
+        type: string
+      record_type:
+        description: "Record type (A, MX, etc.)"
+        required: false
+        type: string
+
+permissions: {} # 이 워크플로우는 GITHUB_TOKEN 을 쓰지 않는다
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node and compile scripts
+        uses: ./.github/actions/setup
+
+      - name: Run PowerDNS Test
+        env:
+          PDNS_API_URL: http://pdns-auth:8081
+          PDNS_API_KEY: ${{ secrets.PDNS_API_KEY }}
+          PDNS_ZONE: ${{ secrets.PDNS_ZONE }}
+          NODE_OPTIONS: "--max-old-space-size=512" # 메모리 제한 (512MB)
+          # workflow_dispatch 입력을 run: 셸에 직접 보간하면 셸 인젝션 싱크가 된다.
+          # 시크릿도 마찬가지로 프로세스 테이블에 노출된다. 전부 env 로 넘긴다.
+          TEST_TYPE: ${{ inputs.test_type }}
+          TEST_ZONE: ${{ inputs.zone }}
+          TEST_SUBDOMAIN: ${{ inputs.subdomain }}
+          TEST_RECORD_TYPE: ${{ inputs.record_type }}
+        timeout-minutes: 5 # 최대 실행 시간 5분 (무한 실행 방지)
+        run: |
+          set -euo pipefail
+          case "$TEST_TYPE" in
+            list)
+              node .github/scripts/test-pdns.js
+              ;;
+            zone)
+              node .github/scripts/test-pdns.js zone "$TEST_ZONE"
+              ;;
+            record)
+              if [ -n "${PDNS_ZONE:-}" ] && [ -z "$TEST_ZONE" ]; then
+                node .github/scripts/test-pdns.js record "$TEST_SUBDOMAIN" "$TEST_RECORD_TYPE"
+              else
+                node .github/scripts/test-pdns.js record "$TEST_ZONE" "$TEST_SUBDOMAIN" "$TEST_RECORD_TYPE"
+              fi
+              ;;
+            *)
+              echo "알 수 없는 test_type: $TEST_TYPE" >&2
+              exit 1
+              ;;
+          esac

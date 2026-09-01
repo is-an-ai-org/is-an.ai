@@ -1,0 +1,13 @@
+{
+   "description": "My AI Portfolio",
+   "owner": {
+      "github_username": "aV3nkI98k4aM03j3W-dWn",
+      "email": "Munwar Ali@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "aly-munwar.netlify.app"
+      }
+   ]
+}

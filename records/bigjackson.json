@@ -1,0 +1,29 @@
+{
+   "description": "Blog",
+   "owner": {
+      "github_username": "cU2cCeOW710ak3ztRnMWR",
+      "email": "tud8951@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "bigjackson.top"
+      },
+      {
+         "type": "A",
+         "value": "185.199.108.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.109.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.110.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.111.153"
+      }
+   ]
+}

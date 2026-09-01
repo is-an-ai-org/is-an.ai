@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "typecheck": "tsc -p .github/scripts/tsconfig.json --noEmit",
+    "build:scripts": "tsc -p .github/scripts/tsconfig.json"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "punycode": "^2.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/punycode": "^2.1.4",
+    "typescript": "~5.8"
+  }
+}

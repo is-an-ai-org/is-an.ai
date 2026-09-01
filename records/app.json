@@ -1,0 +1,13 @@
+{
+   "description": "app",
+   "owner": {
+      "github_username": "XSIs5empjUgny5wX3dHrt",
+      "email": "lite@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "icebear.iwinv.net"
+      }
+   ]
+}

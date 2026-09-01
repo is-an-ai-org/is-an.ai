@@ -1,0 +1,17 @@
+{
+   "description": "Website",
+   "owner": {
+      "github_username": "Pf6FxhyVOViaXj40yl8pR",
+      "email": "Peter Martin@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "45.116.104.76"
+      },
+      {
+         "type": "TXT",
+         "value": "\"v=spf1 a mx ip4:45.116.104.76 ~all\""
+      }
+   ]
+}

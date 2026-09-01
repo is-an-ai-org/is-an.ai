@@ -1,0 +1,13 @@
+{
+   "description": "ok",
+   "owner": {
+      "github_username": "P4pjFFBQEUBzHkJfT_no6",
+      "email": "WindlerLaury@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "glitch51.pages.dev"
+      }
+   ]
+}

@@ -1,0 +1,143 @@
+name: Validate PR
+
+on:
+  pull_request_target:
+    paths:
+      - "records/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+# 같은 PR에 force-push가 연달아 오면 이전 검증 런을 취소한다.
+# (auto-merge 스텝 전까지는 read-only라 취소해도 부작용이 없다)
+concurrency:
+  group: validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Checkout base branch (trusted scripts)
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          fetch-depth: 0
+
+      # Fetch PR head to diff record files only
+      - name: Fetch PR head
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/origin/pr-head"
+
+      - name: Set up Node and compile scripts
+        uses: ./.github/actions/setup
+
+      - name: Reject PRs with non-record file changes
+        run: |
+          BASE_SHA=$(git merge-base HEAD origin/pr-head)
+          NON_RECORD_FILES=$(git diff --name-only $BASE_SHA origin/pr-head | grep -v '^records/.*\.json$' || true)
+          if [ -n "$NON_RECORD_FILES" ]; then
+            echo "❌ PR contains changes outside records/*.json:"
+            echo "$NON_RECORD_FILES"
+            echo "Auto-merge is only allowed for record-only PRs."
+            exit 1
+          fi
+
+      - name: Get changed files
+        id: changes
+        run: |
+          set -euo pipefail
+          BASE_SHA=$(git merge-base HEAD origin/pr-head)
+
+          # 개행 구분 + heredoc 구분자.
+          # 공백으로 join 하면 records/"y\u2006t\u2006k.json" 처럼 유니코드 공백이
+          # 든 파일명이 여러 개로 쪼개진다(그런 파일이 실제로 있다).
+          emit() { # $1=output name, $2=diff-filter
+            local name="$1" filter="$2" files
+            files=$(git diff --name-only --diff-filter="$filter" "$BASE_SHA" origin/pr-head -- 'records/**.json' | grep -v 'schema\.json$' || true)
+            echo "--- $name ---"
+            echo "${files:-(none)}"
+            {
+              echo "${name}<<__EOF_${name}__"
+              echo "$files"
+              echo "__EOF_${name}__"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          emit added A
+          emit modified M
+          emit deleted D
+
+          COMMIT_EMAILS=$(git log "$BASE_SHA"..origin/pr-head --format=%ae | sort -u)
+          {
+            echo "commit_emails<<__EOF_EMAILS__"
+            echo "$COMMIT_EMAILS"
+            echo "__EOF_EMAILS__"
+          } >> "$GITHUB_OUTPUT"
+
+      # 같은 서브도메인을 주장하는 PR 두 건이 둘 다 통과해 둘 다 auto-merge 되던 문제.
+      # 전체 스캔 없이 base 트리에 이미 있는지만 확인한다(파일당 O(1)).
+      # 여기서 못 잡으면 24시간 뒤 nightly full sync 에서야 드러난다.
+      - name: Reject records that already exist on base
+        env:
+          ADDED: ${{ steps.changes.outputs.added }}
+        run: |
+          set -euo pipefail
+          CONFLICTS=0
+          # IFS= + read -r: 파일명에 든 (유니코드) 공백으로 쪼개지지 않게 한다
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            if git cat-file -e "HEAD:$f" 2>/dev/null; then
+              if [ "$CONFLICTS" -eq 0 ]; then
+                echo "❌ 이미 등록된 서브도메인입니다:"
+              fi
+              echo "  - $f"
+              CONFLICTS=$((CONFLICTS + 1))
+            fi
+          done <<< "$ADDED"
+          if [ "$CONFLICTS" -gt 0 ]; then
+            echo "다른 이름을 사용하거나, 본인 소유라면 새로 추가하지 말고 해당 파일을 수정하세요."
+            exit 1
+          fi
+          echo "✓ 중복 서브도메인 없음"
+
+      # Checkout only record files from PR (untrusted data, not scripts)
+      - name: Checkout PR record files
+        run: |
+          git checkout origin/pr-head -- records/ 2>/dev/null || true
+
+      - name: Run validation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+          ADDED_FILES: ${{ steps.changes.outputs.added }}
+          MODIFIED_FILES: ${{ steps.changes.outputs.modified }}
+          DELETED_FILES: ${{ steps.changes.outputs.deleted }}
+          COMMIT_EMAILS: ${{ steps.changes.outputs.commit_emails }}
+        run: node .github/scripts/validate-pr.js
+        timeout-minutes: 5
+
+      - name: Generate App token
+        if: success()
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Enable auto-merge
+        if: success()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR_NUMBER" --auto --squash

@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "y6CSIjUjUHH-0jXldUjBD",
+      "email": "Limkon@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "axtb.pages.dev"
+      }
+   ]
+}

@@ -1,0 +1,13 @@
+{
+   "description": "My homepage",
+   "owner": {
+      "github_username": "nxtzcRvnA11XUPOzktHAB",
+      "email": "Naki@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "retn0.kr"
+      }
+   ]
+}

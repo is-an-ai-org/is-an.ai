@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "DtET2ABi7LPkNk0LIbqVl",
+      "email": "akloopsoi899@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "wk-auto-update0627.pages.dev"
+      }
+   ]
+}

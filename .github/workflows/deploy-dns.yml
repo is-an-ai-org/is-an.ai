@@ -1,0 +1,192 @@
+name: Deploy DNS Records (Incremental)
+
+on:
+# ⛔ org 이전용 — 초기 임포트 동안 자동 실행을 끈다.
+#    ORG-CUTOVER.md Phase 0-4 / Phase 4-16 참조. 검증 끝나면 되살린다.
+  #    특히 여기: orphan 초기 커밋은 HEAD^ 가 없어 EMPTY_TREE 로 폴백하고,
+  #    그러면 3,672건이 전부 '추가'로 잡혀 한 번에 PowerDNS 로 쏟아진다.
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - "records/**.json"
+  # 수동 실행 (전체 동기화는 "Sync DNS Records (Full Sync)" 워크플로우를 사용)
+  workflow_dispatch:
+
+# PowerDNS 존에 쓰는 모든 워크플로우가 이 그룹을 공유한다.
+#  - 진행 중인 런은 끝까지 완주하고, 대기 중이던 이전 런만 취소된다.
+#    => 버스트 N건이 "실행 1 + 대기 1" 두 런으로 접힌다.
+#  - 취소된 런의 커밋은 refs/pdns/deployed 마커 덕분에 유실되지 않는다.
+#  - Full Sync(cron)와도 같은 그룹이라 SOA serial read-modify-write 경합이 사라진다.
+concurrency:
+  group: pdns-write
+  cancel-in-progress: false
+
+permissions:
+  contents: write # refs/pdns/deployed 마커 갱신에 필요
+  issues: write # 배포 실패 알림
+
+env:
+  DEPLOY_MARKER_REF: refs/pdns/deployed
+  EMPTY_TREE: 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # 마커 커밋까지 거슬러 diff해야 하므로 전체 히스토리가 필요하다.
+          fetch-depth: 0
+
+      - name: Resolve deploy range
+        id: range
+        run: |
+          set -euo pipefail
+
+          # 마커 ref는 브랜치/태그가 아니라서 push 이벤트를 재발화시키지 않는다.
+          git fetch --no-tags origin "+${DEPLOY_MARKER_REF}:${DEPLOY_MARKER_REF}" 2>/dev/null || true
+
+          DIFF_TO=$(git rev-parse HEAD)
+
+          if git rev-parse --verify --quiet "${DEPLOY_MARKER_REF}^{commit}" >/dev/null; then
+            DIFF_FROM=$(git rev-parse "${DEPLOY_MARKER_REF}^{commit}")
+            if [ "$DIFF_FROM" = "$DIFF_TO" ]; then
+              echo "Marker already at HEAD ($DIFF_TO) - nothing to deploy."
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # 되돌리기/강제 푸시로 마커가 히스토리에서 이탈했으면 직전 커밋으로 폴백
+            if ! git merge-base --is-ancestor "$DIFF_FROM" "$DIFF_TO"; then
+              echo "::warning::Marker $DIFF_FROM is not an ancestor of HEAD - falling back to HEAD^"
+              DIFF_FROM=$(git rev-parse --verify --quiet 'HEAD^' || echo "${EMPTY_TREE}")
+            fi
+          else
+            echo "::notice::No deploy marker yet - falling back to HEAD^ (first run)"
+            DIFF_FROM=$(git rev-parse --verify --quiet 'HEAD^' || echo "${EMPTY_TREE}")
+          fi
+
+          echo "Deploy range: $DIFF_FROM..$DIFF_TO"
+          echo "diff_from=$DIFF_FROM" >> "$GITHUB_OUTPUT"
+          echo "diff_to=$DIFF_TO" >> "$GITHUB_OUTPUT"
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+      - name: Identify changed records
+        id: changes
+        if: steps.range.outputs.has_changes == 'true'
+        env:
+          DIFF_FROM: ${{ steps.range.outputs.diff_from }}
+          DIFF_TO: ${{ steps.range.outputs.diff_to }}
+        run: |
+          set -euo pipefail
+
+          emit() { # $1=output name, $2=diff-filter
+            local name="$1" filter="$2" files
+            files=$(git diff --name-only --diff-filter="$filter" "$DIFF_FROM" "$DIFF_TO" -- 'records/**.json')
+            echo "--- $name ---"
+            echo "${files:-(none)}"
+            # 개행 구분 + heredoc 구분자: 공백 포함 경로에도 안전
+            {
+              echo "${name}<<__EOF_${name}__"
+              echo "$files"
+              echo "__EOF_${name}__"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          emit added_files A
+          emit modified_files M
+          emit deleted_files D
+
+      - name: Set up Node and compile scripts
+        if: steps.range.outputs.has_changes == 'true'
+        uses: ./.github/actions/setup
+
+      - name: Update DNS via PowerDNS API (Incremental)
+        if: steps.range.outputs.has_changes == 'true'
+        env:
+          PDNS_API_KEY: ${{ secrets.PDNS_API_KEY }}
+          PDNS_API_URL: http://pdns-auth:8081
+          PDNS_ZONE: ${{ secrets.PDNS_ZONE }}
+          ADDED_FILES: ${{ steps.changes.outputs.added_files }}
+          MODIFIED_FILES: ${{ steps.changes.outputs.modified_files }}
+          DELETED_FILES: ${{ steps.changes.outputs.deleted_files }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: node .github/scripts/update-pdns-dns.js
+        timeout-minutes: 5
+
+      - name: Sync records to D1 database
+        if: steps.range.outputs.has_changes == 'true'
+        env:
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          WORKER_API_URL: https://api.is-an.ai
+          ADDED_FILES: ${{ steps.changes.outputs.added_files }}
+          MODIFIED_FILES: ${{ steps.changes.outputs.modified_files }}
+          DELETED_FILES: ${{ steps.changes.outputs.deleted_files }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: node .github/scripts/sync-db.js
+        timeout-minutes: 2
+
+      # 위 단계가 모두 성공했을 때만 마커를 전진시킨다.
+      # 실패하거나 런이 취소되면 마커가 그대로 남아 다음 런이 같은 범위를 다시 배포한다(REPLACE는 멱등).
+      - name: Advance deploy marker
+        if: success() && steps.range.outputs.has_changes == 'true'
+        env:
+          DIFF_TO: ${{ steps.range.outputs.diff_to }}
+        run: |
+          set -euo pipefail
+          if ! git push --force origin "${DIFF_TO}:${DEPLOY_MARKER_REF}"; then
+            echo "::error::마커 ref(${DEPLOY_MARKER_REF}) 푸시에 실패했습니다."
+            echo "DNS 반영 자체는 이미 성공했지만 마커가 전진하지 못했습니다."
+            echo "이 상태를 방치하면 매 런의 diff 범위가 계속 넓어져 결국 타임아웃납니다."
+            echo "확인: 워크플로우 permissions에 contents:write 가 있는지, 저장소가 커스텀 ref 푸시를 허용하는지."
+            exit 1
+          fi
+          echo "Deploy marker advanced to ${DIFF_TO}"
+
+      # 사용자 대면 DNS 를 실제로 바꾸는 쪽인데 여태 실패 알림이 전혀 없었다.
+      # 배포는 자주 돌기 때문에, 이미 열려 있는 실패 이슈가 있으면 새로 만들지 않는다.
+      - name: Report deploy failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'deploy-failure';
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 1,
+            });
+
+            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `또 실패했습니다: ${runUrl} (commit ${context.sha})`,
+              });
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `DNS 배포 실패 - ${context.sha.substring(0, 7)}`,
+              body: [
+                `[워크플로우 실행](${runUrl}) 이 실패했습니다.`,
+                '',
+                '배포 마커(`refs/pdns/deployed`)는 전진하지 않았으므로,',
+                '원인을 고치면 다음 푸시가 이 범위를 자동으로 다시 배포합니다.',
+                '',
+                '확인할 것:',
+                '- PowerDNS API (`pdns-auth:8081`) 연결 상태',
+                '- 잘못된 레코드로 인한 PATCH 422',
+                '- D1 동기화 엔드포인트 (`api.is-an.ai`)',
+              ].join('\n'),
+              labels: ['dns', label, 'urgent'],
+            });

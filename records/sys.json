@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "yiSsdUbLMRM2hhcsLeakO",
+      "email": "ber1yo@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "69.176.84.28"
+      },
+      {
+         "type": "AAAA",
+         "value": "2602:fd37:0109:0132:0000:0000:0000:0001"
+      }
+   ]
+}

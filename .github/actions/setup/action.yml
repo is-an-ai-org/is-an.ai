@@ -1,0 +1,21 @@
+name: "Setup scripts"
+description: "Node 20 설치 + 잠금 파일 기준 의존성 설치 + .github/scripts 컴파일"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "npm"
+
+    # npm install <패키지 나열> 이 아니라 npm ci 를 쓴다.
+    # 예전 방식은 package-lock.json 을 타지 않아서 setup-node 의 cache: "npm" 이
+    # 사실상 무용지물이었고, 설치 결과도 재현되지 않았다.
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Compile TypeScript
+      shell: bash
+      run: npx tsc -p .github/scripts/tsconfig.json

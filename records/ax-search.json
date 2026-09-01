@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "3HYhz7MnNiMsd5VBkM2pS",
+      "email": "sioaeko@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "5a7eeafe0cb62e00.vercel-dns-017.com"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=ax-search.is-an.ai,20ba8c62b46e108c10a4"
+      }
+   ]
+}

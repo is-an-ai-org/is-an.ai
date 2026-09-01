@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "yO5ZmjpIYJuD_e9ats-wk",
+      "email": "hellohellopk@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cname.short.io"
+      }
+   ]
+}

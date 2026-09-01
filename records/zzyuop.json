@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "YzI-5H1NIqZHUjmqxHsNS",
+      "email": "d57kctykt7kxd@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "pokljm.pages.dev"
+      }
+   ]
+}

@@ -1,0 +1,17 @@
+{
+   "description": "wedays",
+   "owner": {
+      "github_username": "sjMmQ1sZ4TEGB7uZxLdCY",
+      "email": "LeeSeongJinCa@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cname.vercel-dns.com"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=wedays.is-an.ai,37176bb6aefa1b7e26b7"
+      }
+   ]
+}

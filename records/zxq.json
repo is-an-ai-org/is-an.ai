@@ -1,0 +1,13 @@
+{
+   "description": "my",
+   "owner": {
+      "github_username": "NCrtpl144YBL1iLguUWJc",
+      "email": "Qing@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "moontv-6h5.pages.dev"
+      }
+   ]
+}

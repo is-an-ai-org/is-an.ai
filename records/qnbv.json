@@ -1,0 +1,13 @@
+{
+   "description": "bolg",
+   "owner": {
+      "github_username": "y50YaQuYXvgb-1qIWojJC",
+      "email": "kseife@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "eweeochelonian.pages.dev"
+      }
+   ]
+}

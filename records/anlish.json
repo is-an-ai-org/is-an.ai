@@ -1,0 +1,13 @@
+{
+   "description": "ai test,pic test",
+   "owner": {
+      "github_username": "dRxodKLkjPFblkiN4Wupi",
+      "email": "anlish@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cfp3-2s6.pages.dev"
+      }
+   ]
+}

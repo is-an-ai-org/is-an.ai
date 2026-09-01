@@ -1,0 +1,13 @@
+{
+   "description": "sms消息推送服务-vultr邮局机器",
+   "owner": {
+      "github_username": "Zc9klItqL7rNain6Zzcdb",
+      "email": "NanoU@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "170.106.167.119"
+      }
+   ]
+}

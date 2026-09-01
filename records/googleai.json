@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "_OObmI2zyqW2WIpyQz2Wa",
+      "email": "lwj-st@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "google.com"
+      }
+   ]
+}

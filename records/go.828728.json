@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "ZQNEY1TnXxjtoW2DFXx_Q",
+      "email": "玄澈 • XuanChe@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cname.dub.co"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=go.828728.is-an.ai,5b9397d95201f533d166"
+      }
+   ]
+}

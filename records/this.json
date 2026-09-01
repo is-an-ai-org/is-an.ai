@@ -1,0 +1,13 @@
+{
+   "description": "this is a test Subdomain",
+   "owner": {
+      "github_username": "EiO1r-7jznNBLGvPHaBgG",
+      "email": "dogfoot@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "112.147.51.254"
+      }
+   ]
+}

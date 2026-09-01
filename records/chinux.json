@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "xqDKaWkCYizy63uoEDWVj",
+      "email": "chinnux@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "520.ttyuki.cn"
+      }
+   ]
+}

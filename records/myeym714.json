@@ -1,0 +1,17 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "R3yFcu0icPyVolKYbX38Q",
+      "email": "myeym@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "bbrozgldtwjp.ap-northeast-1.clawcloudrun.com"
+      },
+      {
+         "type": "A",
+         "value": "47.79.145.165"
+      }
+   ]
+}

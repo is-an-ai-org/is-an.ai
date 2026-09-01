@@ -1,0 +1,13 @@
+{
+   "description": "fisrt demo aioi",
+   "owner": {
+      "github_username": "zsM9pyprz7xSr6OInUAXb",
+      "email": "codesun981@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "libretv-2mk.pages.dev"
+      }
+   ]
+}

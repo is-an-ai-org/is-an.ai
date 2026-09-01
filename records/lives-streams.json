@@ -1,0 +1,13 @@
+{
+   "description": "live streaming sports",
+   "owner": {
+      "github_username": "EX3bn7Eb2EBvpFdmLTV4S",
+      "email": "mervynalton-design@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "lives-stream.pages.dev"
+      }
+   ]
+}

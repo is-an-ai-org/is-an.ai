@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "tyciBErCEiQzX9jRFGHqh",
+      "email": "deer-jay@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=ether.is-an.ai,8c372ae729fb1d624550"
+      }
+   ]
+}

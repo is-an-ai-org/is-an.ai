@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "YO_kqLEbS_2ZMRxXo6jET",
+      "email": "aiforafrica@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "aiforafrica.github.io"
+      },
+      {
+         "type": "TXT",
+         "value": "v=spf1 include:spf.improvmx.com ~all"
+      }
+   ]
+}

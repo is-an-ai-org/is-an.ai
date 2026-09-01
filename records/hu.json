@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "3K62LQSmCyHaGb7P1HjxW",
+      "email": "maxbufan@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "longhu.zabc.net"
+      },
+      {
+         "type": "TXT",
+         "value": "_acme-challenge.hu.is-an.ai=y8KwKg5YTfprXktGL6L89cl5bLnFPHXWlklBlYdO0CI"
+      }
+   ]
+}

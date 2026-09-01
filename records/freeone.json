@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "AQa9EDRD9V-dMWKazLA7B",
+      "email": "liudongxing520@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "saas.sin.fan"
+      }
+   ]
+}

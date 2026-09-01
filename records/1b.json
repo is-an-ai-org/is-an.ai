@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "uWNmQgjMe3nIpNkmcdQrN",
+      "email": "kuanghaihang10@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "111.173.104.135"
+      },
+      {
+         "type": "TXT",
+         "value": "XTaLDNUvC0s8IpjWy7USWAmmSb8CKslPCGT8l35ABQA _acme-challenge.1b.is-an.ai"
+      }
+   ]
+}

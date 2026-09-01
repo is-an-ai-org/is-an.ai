@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "3K62LQSmCyHaGb7P1HjxW",
+      "email": "maxbufan@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "baidu.com"
+      }
+   ]
+}

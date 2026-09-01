@@ -1,0 +1,17 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "fBST0N0fjVnQlugXPqBNF",
+      "email": "weifanonion@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "peaches.ns.cloudflare.com"
+      },
+      {
+         "type": "CNAME",
+         "value": "sid.ns.cloudflare.com"
+      }
+   ]
+}

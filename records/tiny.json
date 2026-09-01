@@ -1,0 +1,25 @@
+{
+   "description": "check",
+   "owner": {
+      "github_username": "tuYbogfGA51jpdb4UZk5q",
+      "email": "Tiny, Kim@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "185.199.108.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.109.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.110.153"
+      },
+      {
+         "type": "A",
+         "value": "185.199.111.153"
+      }
+   ]
+}

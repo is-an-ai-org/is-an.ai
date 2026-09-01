@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "ALeEvcW6qcfFasTCzNwHo",
+      "email": "making@noreply.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "150.40.176.142"
+      }
+   ]
+}
