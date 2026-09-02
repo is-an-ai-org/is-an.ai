@@ -21,9 +21,15 @@ const BLACKLISTED_SUBDOMAINS = [
   "sync", "blog", "tunnel", "papers", "contact", "scheme",
   "www", "api", "ns1", "ns2", "docs", "status", "dashboard",
   "assets", "smtp", "mail", "dev", "_dmarc", "_github-challenge-is-an-ai",
+  "_github-challenge-is-an-ai-org",
 ];
 
-const BOT_AUTHORS = ["is-an-ai-bot[bot]", "is-an-ai[bot]"];
+// 구 org 봇 2개는 남겨 둔다 — 이전 전에 열린 PR 이 아직 있을 수 있다.
+const BOT_AUTHORS = [
+  "is-an-ai-org-bot[bot]",
+  "is-an-ai-bot[bot]",
+  "is-an.ai[bot]",
+];
 const NOREPLY_PATTERNS = [/@noreply\.com$/i, /@users\.noreply\.github\.com$/i];
 
 const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;

@@ -714,7 +714,8 @@ async function syncDNSRecords(): Promise<void> {
 
   // 6. Execute changes (with protection logic)
   // Auto-generate protected FQDNs from INFRA_RECORDS + additional system domains
-  const EXTRA_PROTECTED = ["ns1", "ns2", "_vercel", "_domainkey", "_github-challenge-is-an-ai"];
+  const EXTRA_PROTECTED = ["ns1", "ns2", "_vercel", "_domainkey",
+    "_github-challenge-is-an-ai", "_github-challenge-is-an-ai-org"];
   const PROTECTED_FQDNS = new Set([
     ...Array.from(INFRA_SUBDOMAINS).map((s) => subdomainToFqdn(s)),
     ...EXTRA_PROTECTED.map((s) => subdomainToFqdn(s)),

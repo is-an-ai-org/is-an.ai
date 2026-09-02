@@ -100,6 +100,7 @@
       "enforcement": "handled_by_vendor_pattern",
       "names": [
         "_github-challenge-is-an-ai",
+        "_github-challenge-is-an-ai-org",
         "_vercel"
       ]
     },

@@ -480,6 +480,7 @@ async function processChanges(): Promise<void> {
     "@", "www", "ns1", "ns2", "api",
     "_acme-challenge",
     "_vercel", "_domainkey", "_dmarc", "_github-challenge-is-an-ai",
+    "_github-challenge-is-an-ai-org",
   ]);
 
   const normName = (n: string) => n.toLowerCase().replace(/\.$/, "");
