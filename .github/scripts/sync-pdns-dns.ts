@@ -229,7 +229,43 @@ function normalizeContent(type: string, content: string): string {
         .join(".");
     }
   }
+  if (upperType === "AAAA") {
+    return expandIpv6(content);
+  }
   return content;
+}
+
+/**
+ * IPv6를 8그룹 4자리 소문자로 펼친다.
+ *
+ * PowerDNS는 저장할 때 RFC 5952로 압축해서 돌려준다
+ * ("2001:41d0:0303:643d:0000:0000:04c7:b145" -> "2001:41d0:303:643d::4c7:b145").
+ * 저장소는 사용자가 적은 형태 그대로다. 시그니처가 원문 문자열이던 동안
+ * 이 둘은 영원히 달랐고, AAAA 25건이 매 동기화마다 REPLACE로 잡혀
+ * SOA serial이 올라갔다. 그러면 HE 세컨더리가 매일 전 존을 다시 받아간다.
+ *
+ * 압축(RFC 5952)이 아니라 펼치는 쪽을 고른 이유: 압축은 "가장 긴 0 구간"
+ * 선택 규칙 때문에 구현이 틀리기 쉽고, 펼치기는 양쪽을 같은 형태로 만들기만
+ * 하면 되므로 비교 목적에는 이걸로 충분하다.
+ */
+function expandIpv6(content: string): string {
+  // IPv4 매핑 표기(::ffff:1.2.3.4)는 건드리지 않는다. 여기서 잘못 만지면
+  // 조용히 다른 주소가 된다. 실사용 0건이라 현행 유지가 안전하다.
+  if (content.includes(".")) return content;
+
+  const halves = content.split("::");
+  if (halves.length > 2) return content;
+
+  const head = halves[0] ? halves[0].split(":") : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(":") : [];
+  const fill = halves.length === 2 ? 8 - head.length - tail.length : 0;
+  if (fill < 0) return content;
+
+  const groups = [...head, ...Array(fill).fill("0"), ...tail];
+  if (groups.length !== 8) return content;
+  if (!groups.every((g) => /^[0-9a-fA-F]{1,4}$/.test(g))) return content;
+
+  return groups.map((g) => g.toLowerCase().padStart(4, "0")).join(":");
 }
 
 // --- PowerDNS API Functions ---
@@ -295,6 +331,37 @@ async function getCurrentSoaSerial(): Promise<number> {
     );
   }
   return cachedSoaSerial;
+}
+
+/**
+ * 한 이름에 CNAME이 여러 개면 첫 번째만 남긴다.
+ *
+ * payload를 만들 때는 이미 접고 있었지만(“Multiple CNAMEs found … Using only
+ * the first one”), 비교용 시그니처는 접지 않아서 저장소 쪽에만 2~3개가 남았다.
+ * 그러면 PowerDNS에 실제로 쓰인 1개와 영원히 어긋나 매 실행 REPLACE가 나간다.
+ * 접는 위치를 payload 단계에서 적재 단계로 올려 양쪽이 같은 것을 보게 한다.
+ */
+function collapseExtraCnames(
+  subdomain: string,
+  signatures: RecordSignature[]
+): RecordSignature[] {
+  let seenCname = false;
+  const kept: RecordSignature[] = [];
+  for (const sig of signatures) {
+    if (sig.type.toUpperCase() === "CNAME") {
+      if (seenCname) continue;
+      seenCname = true;
+    }
+    kept.push(sig);
+  }
+  if (kept.length !== signatures.length) {
+    console.warn(
+      `⚠️ Multiple CNAMEs for '${subdomain}': keeping the first, ignoring ${
+        signatures.length - kept.length
+      }.`
+    );
+  }
+  return kept;
 }
 
 /**
@@ -441,7 +508,10 @@ async function loadAllRepositoryRecords(): Promise<
         }
         // Append to existing entries (multiple _{vendor}.* files merge into "_{vendor}")
         const existing = recordMap.get(effectiveSubdomain) || [];
-        recordMap.set(effectiveSubdomain, [...existing, ...signatures]);
+        recordMap.set(
+          effectiveSubdomain,
+          collapseExtraCnames(effectiveSubdomain, [...existing, ...signatures])
+        );
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Error processing file ${file}:`, message);
