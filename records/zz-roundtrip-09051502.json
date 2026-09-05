@@ -1,0 +1,13 @@
+{
+   "description": "cutover round-trip verification; removed immediately",
+   "owner": {
+      "github_username": "han299792",
+      "email": "han299792@gmail.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "org-cutover-roundtrip-20260905T060220Z"
+      }
+   ]
+}
