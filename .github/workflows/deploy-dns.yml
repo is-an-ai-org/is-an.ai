@@ -1,15 +1,18 @@
 name: Deploy DNS Records (Incremental)
 
 on:
-# ⛔ org 이전용 — 초기 임포트 동안 자동 실행을 끈다.
-#    ORG-CUTOVER.md Phase 0-4 / Phase 4-16 참조. 검증 끝나면 되살린다.
-  #    특히 여기: orphan 초기 커밋은 HEAD^ 가 없어 EMPTY_TREE 로 폴백하고,
-  #    그러면 3,672건이 전부 '추가'로 잡혀 한 번에 PowerDNS 로 쏟아진다.
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - "records/**.json"
+  # records 파일이 main 에 들어오면 증분 배포.
+  # (2026-09-05 되살림. org 이전 동안 꺼 뒀던 이유는 orphan 초기 커밋에
+  #  HEAD^ 가 없어 EMPTY_TREE 로 폴백하고, 그러면 3,600여 건이 전부 '추가'로
+  #  잡혀 한 번에 쏟아지기 때문이었다. 이제 main 에 커밋이 쌓여 HEAD^ 가
+  #  존재하므로 그 폴백에 걸리지 않는다.
+  #  refs/pdns/deployed 마커는 아직 없다 — 이 워크플로가 성공해야 처음
+  #  만들어진다. 그때까지는 HEAD^ 폴백으로 동작하고, 그게 맞는 동작이다.)
+  push:
+    branches:
+      - main
+    paths:
+      - "records/**.json"
   # 수동 실행 (전체 동기화는 "Sync DNS Records (Full Sync)" 워크플로우를 사용)
   workflow_dispatch:
 
