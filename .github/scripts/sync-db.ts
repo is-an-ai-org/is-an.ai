@@ -52,7 +52,7 @@ async function loadRecordFile(filePath: string): Promise<RecordFile | null> {
 // --- Main ---
 
 async function syncDB(): Promise<void> {
-  console.log("=== Syncing records to D1 database ===");
+  console.log("=== Syncing records to DynamoDB database ===");
 
   if (!ADMIN_API_KEY) {
     console.log("ADMIN_API_KEY not set, skipping DB sync");
@@ -112,7 +112,7 @@ async function syncDB(): Promise<void> {
     // 5xx / 네트워크 = 일시적. 실패로 처리해 다음 런이 같은 범위를 다시 시도하게 한다.
     const retryable = res.status >= 500;
     console.log(
-      `::error::D1 동기화 실패 (${res.status}). PowerDNS 반영은 완료됐지만 대시보드 DB가 어긋났습니다. ${error}`
+      `::error::DynamoDB 동기화 실패 (${res.status}). PowerDNS 반영은 완료됐지만 대시보드 DB가 어긋났습니다. ${error}`
     );
     if (retryable) {
       throw new Error(`DB sync failed with retryable status ${res.status}`);
@@ -129,8 +129,8 @@ async function syncDB(): Promise<void> {
 
   console.log(`✓ DB sync complete: ${result.added} added, ${result.modified} modified, ${result.deleted} deleted`);
   if (result.errors.length > 0) {
-    // 이전에는 console.warn 이라 로그에 묻혔다. 레코드 단위 실패는 곧 DNS<->D1 드리프트다.
-    console.log(`::warning::D1 동기화 중 ${result.errors.length}건의 레코드 오류가 있었습니다`);
+    // 이전에는 console.warn 이라 로그에 묻혔다. 레코드 단위 실패는 곧 DNS<->DynamoDB 드리프트다.
+    console.log(`::warning::DynamoDB 동기화 중 ${result.errors.length}건의 레코드 오류가 있었습니다`);
     for (const err of result.errors) {
       console.log(`::warning::  - ${err}`);
     }
@@ -140,6 +140,6 @@ async function syncDB(): Promise<void> {
 syncDB().catch((err) => {
   // 네트워크 오류 등 일시적 실패. 실패로 끝내면 배포 마커가 전진하지 않으므로
   // 다음 런이 같은 범위를 그대로 다시 배포한다(PATCH/upsert 모두 멱등).
-  console.log(`::error::D1 동기화 오류: ${err?.message || err}`);
+  console.log(`::error::DynamoDB 동기화 오류: ${err?.message || err}`);
   process.exit(1);
 });
