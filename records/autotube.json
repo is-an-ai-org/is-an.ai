@@ -1,0 +1,9 @@
+{
+  "description": "AutoTube AI project",
+  "owner": {
+    "email": "jjafri45@gmail.com"
+  },
+  "record": [
+    { "type": "CNAME", "value": "jjafri45.github.io" }
+  ]
+}
