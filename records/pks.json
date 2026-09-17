@@ -1,0 +1,13 @@
+{
+   "description": "video game clien",
+   "owner": {
+      "github_username": "8xqWHwIuw-vQoQgfnENhZ",
+      "email": "pksmp@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "d7d3a11ca929928b.vercel-dns-017.com"
+      }
+   ]
+}
