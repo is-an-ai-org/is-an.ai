@@ -1,0 +1,13 @@
+{
+   "description": "vercel verification for giant",
+   "owner": {
+      "github_username": "T7jfY34tnWOgVeKqyqJuu",
+      "email": "Priyanshu Gupta@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=giant.is-an.ai,621597479fb6219593c8"
+      }
+   ]
+}
