@@ -1,0 +1,13 @@
+{
+   "description": "레어닉 먹기",
+   "owner": {
+      "github_username": "myNqVUtw19kP2n-hWAMm4",
+      "email": "kshmaker@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "gpu"
+      }
+   ]
+}
