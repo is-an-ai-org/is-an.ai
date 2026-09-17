@@ -1,0 +1,13 @@
+{
+   "description": "a minecraft server",
+   "owner": {
+      "github_username": "8xqWHwIuw-vQoQgfnENhZ",
+      "email": "pksmp@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "play.pksmp.org"
+      }
+   ]
+}
