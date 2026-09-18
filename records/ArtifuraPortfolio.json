@@ -1,0 +1,13 @@
+{
+   "description": "This is optional",
+   "owner": {
+      "github_username": "r4pvFiBTe-03zRPY9_cTU",
+      "email": "Dhanish G@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "dhanish-27.github.io"
+      }
+   ]
+}
