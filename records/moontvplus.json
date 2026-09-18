@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "TXT",
-         "value": "reclaim-5ya9k7dfof02ljg0qarpt81p070wm8tl"
+         "type": "CNAME",
+         "value": "tv.su7.bot.cd"
       }
    ]
 }
