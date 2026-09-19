@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "A",
-         "value": "216.198.79.3"
+         "type": "TXT",
+         "value": "_vercel"
       }
    ]
 }
