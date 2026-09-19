@@ -8,10 +8,6 @@
       {
          "type": "CNAME",
          "value": "76e13c27d6de5b02.vercel-dns-017.com"
-      },
-      {
-         "type": "TXT",
-         "value": "vc-domain-verify=devapp.is-an.ai,a07a22e4e45e64851d3b"
       }
    ]
 }
