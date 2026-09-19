@@ -11,7 +11,7 @@
       },
       {
          "type": "TXT",
-         "value": "vc-domain-verify=devapp.is-an.ai,a07a22e4e45e64851d3b"
+         "value": "_vercel=vc-domain-verify=devapp.is-an.ai,a07a22e4e45e64851d3b"
       }
    ]
 }
