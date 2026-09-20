@@ -1,0 +1,13 @@
+{
+   "description": "AI-powered tree species identifier that analyzes photos using Pl@ntNet and compares Arabian Peninsula and worldwide plant models.",
+   "owner": {
+      "github_username": "VS2Ot0L6XXKqn9CyZFqlT",
+      "email": "aHmed-Afreet@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "tree-vision.netlify.app"
+      }
+   ]
+}
