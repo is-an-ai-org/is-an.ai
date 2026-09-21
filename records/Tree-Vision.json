@@ -8,6 +8,10 @@
       {
          "type": "CNAME",
          "value": "tree-vision.netlify.app"
+      },
+      {
+         "type": "TXT",
+         "value": "1120448"
       }
    ]
 }
