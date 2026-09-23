@@ -147,22 +147,14 @@ function isMxRecordValue(value: any): value is MxRecordValue {
   );
 }
 
-/**
- * 비교 전용 타입 정규화.
- *
- * 저장소는 항상 CNAME으로 적지만, apex이거나 다른 타입과 공존하면
- * PowerDNS에는 ALIAS로 들어간다(아래 payload 빌더의 규칙). 이걸 정규화하지 않으면
- * 해당 레코드들이 매 실행 toCreate와 toDelete 양쪽에 영구히 걸린다.
- * signature 키에만 쓰고, RecordSignature.type 자체는 원본을 유지한다
- * (DELETE는 PowerDNS에 실제로 존재하는 타입으로 나가야 하므로).
- */
-function signatureType(type: string): string {
-  return type.toUpperCase() === "ALIAS" ? "CNAME" : type;
-}
-
 function createRecordSignature(record: RecordSignature): string {
-  const { subdomain, priority } = record;
-  const type = signatureType(record.type);
+  // 타입은 resolveEffectiveTypes()가 이미 PowerDNS에 들어갈 실효 타입으로
+  // 확정해 둔 것을 그대로 쓴다. 예전에는 여기서 ALIAS를 CNAME으로 되돌려
+  // 비교했는데, 그러면 "PowerDNS에는 CNAME, 저장소 기준으로는 ALIAS여야 함"
+  // 이라는 드리프트가 diff에서 통째로 사라진다. 그 드리프트가 안 보이는 동안
+  // 같은 이름에 TXT를 새로 넣으면 PowerDNS가 422로 막고, PATCH가 원자적이라
+  // 그날 동기화 전체가 죽는다.
+  const { subdomain, type, priority } = record;
   // 콘텐츠 정규화를 시그니처 단계에서 적용한다.
   // 예전에는 payload를 만들 때만 정규화해서, 저장소의 "example.com" 과
   // PowerDNS의 "example.com." 이 영구히 다른 것으로 잡혔다
@@ -200,7 +192,9 @@ function subdomainToFqdn(subdomain: string): string {
 }
 
 function normalizeContent(type: string, content: string): string {
-  const typesNeedingDot = ["CNAME", "MX", "NS", "SRV", "PTR"];
+  // ALIAS 가 빠져 있으면 저장소의 "x.vercel-dns.com" 과 PowerDNS 가 돌려주는
+  // "x.vercel-dns.com." 이 영구히 다른 것으로 잡혀 매 실행 REPLACE 가 나간다.
+  const typesNeedingDot = ["CNAME", "ALIAS", "MX", "NS", "SRV", "PTR"];
   const upperType = type.toUpperCase();
 
   if (typesNeedingDot.includes(type.toUpperCase())) {
@@ -525,40 +519,185 @@ async function loadAllRepositoryRecords(): Promise<
   }
 }
 
+/**
+ * 저장소에 적힌 타입을 PowerDNS 에 실제로 들어갈 "실효 타입"으로 확정한다.
+ *
+ * 이 규칙은 원래 payload 빌더 안에 있었다. 그런데 빌더는 changedRrsetKeys 에
+ * 든 RRSet 만 순회한다. CNAME 내용이 그대로인 채 같은 이름에 TXT 가 새로
+ * 생기면 CNAME 쪽은 "변경 없음"이라 빌더를 타지 못하고, CNAME -> ALIAS 변환이
+ * 발행되지 않은 채 TXT REPLACE 만 나간다. PowerDNS 는 기존 CNAME 과 충돌한다며
+ * 422 를 돌려주고, PATCH 가 원자적이라 그날 동기화 전체가 죽는다.
+ * 2026-09-21 tree-vision 이 정확히 이 경로로 들어와 존 쓰기가 사흘간 멈췄다.
+ *
+ * 그래서 변환을 비교 이전으로 끌어올린다. 저장소 쪽 타입이 처음부터 PowerDNS 에
+ * 들어갈 타입과 같아지면, CNAME -> ALIAS 전환이 평범한 diff(CNAME 삭제 +
+ * ALIAS 생성)로 잡히고 같은 PATCH 안에서 순서대로 처리된다.
+ *
+ * A/AAAA 와 CNAME 이 겹칠 때 CNAME 을 버리는 것도 여기로 올린다. 예전에는
+ * payload 단계에서만 버려서, 저장소 시그니처 집합에는 그 CNAME 이 남아 매 실행
+ * "생성 예정"으로 잡혔다(현재 23건). 실제 드리프트가 그 노이즈에 묻힌다.
+ */
+function resolveEffectiveTypes(recordMap: Map<string, RecordSignature[]>): void {
+  let aliasCount = 0;
+  let droppedCname = 0;
+
+  for (const [subdomain, records] of recordMap.entries()) {
+    if (!records.some((r) => r.type === "CNAME")) continue;
+
+    // A/AAAA 가 있으면 CNAME 은 공존할 수 없다. IP 를 살리고 CNAME 을 버린다.
+    if (records.some((r) => r.type === "A" || r.type === "AAAA")) {
+      const kept = records.filter((r) => r.type !== "CNAME");
+      droppedCname += records.length - kept.length;
+      console.warn(
+        `⚠️ '${subdomain}': A/AAAA 와 CNAME 이 함께 있어 CNAME 을 무시한다.`
+      );
+      recordMap.set(subdomain, kept);
+      continue;
+    }
+
+    // apex 이거나 다른 타입과 공존하면 PowerDNS 에는 ALIAS 로 들어간다.
+    // (자식 이름은 RFC 상 충돌이 아니다. 같은 이름만 문제다.)
+    const mixed = records.some((r) => r.type !== "CNAME");
+    if (subdomain !== "@" && !mixed) continue;
+
+    aliasCount++;
+    recordMap.set(
+      subdomain,
+      records.map((r) => (r.type === "CNAME" ? { ...r, type: "ALIAS" } : r))
+    );
+  }
+
+  console.log(
+    `Effective types resolved: CNAME -> ALIAS ${aliasCount}건, ` +
+      `A/AAAA 와 겹쳐 버린 CNAME ${droppedCname}건`
+  );
+}
+
+const PATCH_CHUNK_SIZE = Number(process.env.PATCH_CHUNK_SIZE ?? "100");
+
+interface PatchFailure {
+  rrsets: PdnsApiPatchRRSet[];
+  detail: string;
+}
+
+/**
+ * 이름별로 묶어 청크를 만든다.
+ *
+ * 같은 이름의 변경은 절대 갈라지면 안 된다. CNAME -> ALIAS 전환은
+ * "DELETE CNAME + REPLACE ALIAS" 두 RRSet 이 한 트랜잭션에 같이 들어가야
+ * 성립한다. 갈라지면 앞 청크가 이름을 비워 둔 채 끝나거나, 뒤 청크가 아직
+ * 살아 있는 CNAME 과 충돌한다.
+ */
+function chunkByName(
+  payload: PdnsApiPatchRRSet[],
+  size: number
+): PdnsApiPatchRRSet[][] {
+  const byName = new Map<string, PdnsApiPatchRRSet[]>();
+  for (const item of payload) {
+    const group = byName.get(item.name);
+    if (group) group.push(item);
+    else byName.set(item.name, [item]);
+  }
+
+  const chunks: PdnsApiPatchRRSet[][] = [];
+  let current: PdnsApiPatchRRSet[] = [];
+  for (const group of byName.values()) {
+    // 한 이름 안에서는 DELETE 가 먼저다. PowerDNS 는 트랜잭션 안에서 받은
+    // 순서대로 적용하므로, 기존 CNAME 을 지우기 전에 TXT 를 넣으면 422 다.
+    group.sort((a, b) =>
+      a.changetype === b.changetype ? 0 : a.changetype === "DELETE" ? -1 : 1
+    );
+    if (current.length > 0 && current.length + group.length > size) {
+      chunks.push(current);
+      current = [];
+    }
+    current.push(...group);
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
+/**
+ * 청크 단위로 보내고, 실패한 청크는 이름 단위로 다시 쪼개 범인만 골라낸다.
+ *
+ * 예전에는 전부 한 번의 PATCH 로 나갔다. PowerDNS 의 zone PATCH 는 원자적이라
+ * 레코드 하나가 422 면 그날 변경분 전체가 적용되지 않는다. 사용자가 올린 레코드
+ * 하나가 존 전체의 드리프트 교정을 무기한 멈춰 세울 수 있다는 뜻이다.
+ * 이제 나쁜 이름 하나는 자기 자신만 떨어뜨리고, 나머지는 반영된다.
+ */
+async function applyPatchInChunks(
+  payload: PdnsApiPatchRRSet[]
+): Promise<{ applied: number; failures: PatchFailure[] }> {
+  const chunks = chunkByName(payload, PATCH_CHUNK_SIZE);
+  console.log(
+    `\n=== Executing PowerDNS PATCH: ${payload.length} RRSet changes / ` +
+      `${chunks.length} chunk(s) ===`
+  );
+
+  let applied = 0;
+  const failures: PatchFailure[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const label = `chunk ${i + 1}/${chunks.length} (${chunk.length} RRSets)`;
+
+    const error = await executePdnsPatch(chunk);
+    if (!error) {
+      applied += chunk.length;
+      console.log(`✓ ${label} applied`);
+      continue;
+    }
+
+    console.error(`✗ ${label} 실패: ${error}`);
+    console.error("   이름 단위로 다시 시도해 원인을 분리한다.");
+
+    for (const group of chunkByName(chunk, 1)) {
+      const groupError = await executePdnsPatch(group);
+      if (!groupError) {
+        applied += group.length;
+        continue;
+      }
+      failures.push({ rrsets: group, detail: groupError });
+      console.error(`   ✗ ${group[0].name}: ${groupError}`);
+    }
+  }
+
+  return { applied, failures };
+}
+
+/**
+ * PATCH 한 번. 성공하면 null, 실패하면 사람이 읽을 사유 문자열을 돌려준다.
+ */
 async function executePdnsPatch(
   payload: PdnsApiPatchRRSet[]
-): Promise<boolean> {
-  console.log(`\n=== Executing PowerDNS PATCH ===`);
-  console.log(`Sending ${payload.length} RRSet changes...`);
-
+): Promise<string | null> {
   if (DRY_RUN) {
-    console.log("[DRY RUN] Would send the following PATCH payload:");
+    console.log(`[DRY RUN] Would send ${payload.length} RRSet change(s):`);
     console.log(JSON.stringify({ rrsets: payload }, null, 2));
-    return true;
+    return null;
   }
 
   try {
     await pdnsClient.patch(`/api/v1/servers/localhost/zones/${PDNS_ZONE}`, {
       rrsets: payload,
     });
-    console.log("✓ PowerDNS update successful!");
-    return true;
+    return null;
   } catch (error: unknown) {
-    console.error("✗ Failed to execute PowerDNS PATCH:");
     if (error && typeof error === "object" && axios.isAxiosError(error)) {
       if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
-        console.error("❌ PowerDNS API request timed out (exceeded 30s)");
-      } else if (error.response) {
-        console.error("Status:", error.response.status);
-        console.error("Data:", JSON.stringify(error.response.data, null, 2));
-      } else if (error.request) {
-        console.error("❌ Unable to connect to PowerDNS server.");
+        return "PowerDNS API 요청 타임아웃(30s 초과)";
       }
-    } else {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error:", message);
+      if (error.response) {
+        const data: unknown = error.response.data;
+        const detail =
+          data && typeof data === "object" && "error" in data
+            ? String((data as { error: unknown }).error)
+            : JSON.stringify(data);
+        return `HTTP ${error.response.status}: ${detail}`;
+      }
+      if (error.request) return "PowerDNS 서버에 연결할 수 없음";
     }
-    return false;
+    return error instanceof Error ? error.message : String(error);
   }
 }
 
@@ -584,6 +723,10 @@ async function syncDNSRecords(): Promise<void> {
     repositoryRecordsMap.set(infra.subdomain, existing);
   }
   console.log(`Injected ${INFRA_RECORDS.length} infrastructure records`);
+
+  // 1.6. 비교 전에 저장소 쪽 타입을 PowerDNS 에 들어갈 실효 타입으로 확정한다.
+  //      이게 diff 보다 뒤에 있으면 CNAME -> ALIAS 전환이 영영 발행되지 않는다.
+  resolveEffectiveTypes(repositoryRecordsMap);
 
   // 2. Convert PDNS state into a comparable Map
   const pdnsSignatures = new Map<string, RecordSignature>();
@@ -709,41 +852,17 @@ async function syncDNSRecords(): Promise<void> {
 
   for (const { subdomain, type } of changedRrsetKeys.values()) {
     const fqdn = subdomainToFqdn(subdomain);
-    let repoRecordsForRrset =
+    const repoRecordsForRrset =
       repositoryRecordsMap.get(subdomain)?.filter((r) => r.type === type) || [];
 
     if (repoRecordsForRrset.length > 0) {
       // --- REPLACE logic ---
-      if (type === "CNAME" && repoRecordsForRrset.length > 1) {
-        console.warn(
-          `⚠️ Warning: Multiple CNAMEs found for ${fqdn}. Using only the first one.`
-        );
-        repoRecordsForRrset = [repoRecordsForRrset[0]];
-      }
-
-      let finalType = type;
-      if (type === "CNAME") {
-        const allRecords = repositoryRecordsMap.get(subdomain) || [];
-        const hasIPRecords = allRecords.some(
-          (r) => r.type === "A" || r.type === "AAAA"
-        );
-
-        if (hasIPRecords) {
-          console.warn(
-            `⚠️ Conflict: CNAME cannot coexist with A/AAAA. Ignoring CNAME.`
-          );
-          continue;
-        }
-        if (fqdn === ZONE_FQDN) finalType = "ALIAS";
-        const hasOtherTypes = allRecords.some((r) => r.type !== "CNAME");
-        if (hasOtherTypes && finalType === "CNAME") finalType = "ALIAS";
-        // Note: child subdomains (e.g., _acme-challenge.api under api) do NOT
-        // conflict with CNAME per RFC. Only same-name records conflict.
-      }
-
+      // CNAME/ALIAS 판정과 중복 CNAME 접기는 전부 비교 이전 단계에서 끝났다
+      // (collapseExtraCnames + resolveEffectiveTypes). 여기서 타입을 다시
+      // 손대면 시그니처와 payload 가 어긋나 같은 버그가 되살아난다.
       patchPayload.push({
         name: fqdn,
-        type: finalType,
+        type,
         ttl: DEFAULT_TTL,
         changetype: "REPLACE",
         records: repoRecordsForRrset.map((r) => {
@@ -772,15 +891,8 @@ async function syncDNSRecords(): Promise<void> {
     return;
   }
 
-  // ---------------------------------------------------------
-  // [Core fix] Sort payload: DELETEs must come before REPLACEs
-  // ---------------------------------------------------------
-  patchPayload.sort((a, b) => {
-    // DELETE(-1) comes before REPLACE(1)
-    if (a.changetype === "DELETE" && b.changetype !== "DELETE") return -1;
-    if (a.changetype !== "DELETE" && b.changetype === "DELETE") return 1;
-    return 0;
-  });
+  // 같은 이름 안에서 DELETE 를 REPLACE 앞에 두는 일은 chunkByName() 이 한다.
+  // 충돌은 같은 이름에서만 일어나므로 전역 정렬은 필요 없다.
 
   // 6. Execute changes (with protection logic)
   // Auto-generate protected FQDNs from INFRA_RECORDS + additional system domains
@@ -829,8 +941,9 @@ async function syncDNSRecords(): Promise<void> {
   const newSerial = currentSerial >= todayBase ? currentSerial + 1 : todayBase;
   console.log(`📆 SOA serial: ${currentSerial} -> ${newSerial}`);
 
-  // Add SOA record
-  finalPayload.push({
+  // SOA 는 레코드 변경과 같은 PATCH 에 넣지 않는다. 청크 하나가 실패해도
+  // 나머지가 적용되므로, serial 은 "실제로 뭔가 적용된 뒤"에 한 번만 올린다.
+  const soaRRSet: PdnsApiPatchRRSet = {
     name: ZONE_FQDN,
     type: "SOA",
     ttl: 3600,
@@ -841,24 +954,54 @@ async function syncDNSRecords(): Promise<void> {
         disabled: false,
       },
     ],
-  });
+  };
 
-  console.log(
-    `=== Executing PowerDNS PATCH (${finalPayload.length} changes) ===`
-  );
+  const { applied, failures } = await applyPatchInChunks(finalPayload);
 
-  // [Important] Pass the filtered finalPayload + SOA to the execution function, not patchPayload.
-  const success = await executePdnsPatch(finalPayload);
-
-  if (!success) {
-    console.error("✗ DNS sync process failed during PowerDNS PATCH.");
+  if (applied === 0) {
+    console.error("\n✗ 적용된 변경이 하나도 없다. SOA serial 을 올리지 않는다.");
+    reportFailures(failures);
     process.exit(1);
   }
+
+  const soaError = await executePdnsPatch([soaRRSet]);
+  if (soaError) {
+    console.error(`\n✗ SOA serial 갱신 실패: ${soaError}`);
+    console.error(
+      "   레코드 변경은 적용됐지만 serial 이 그대로다. 세컨더리가 이번 변경을 " +
+        "가져가지 않는다. 다음 실행에서 다시 시도한다."
+    );
+    process.exit(1);
+  }
+  console.log(`✓ SOA serial updated to ${newSerial}`);
 
   // Send NOTIFY - trigger immediate zone transfer to secondaries (HE, etc.)
   await sendPdnsNotify();
 
-  console.log(`\n✓ DNS sync process completed!`);
+  if (failures.length > 0) {
+    reportFailures(failures);
+    console.error(
+      `\n✗ ${applied}개 RRSet 은 반영됐고 ${failures.length}개 이름이 거부됐다.`
+    );
+    console.error("   SOA/NOTIFY 는 정상 처리됐다. 위 레코드만 고치면 된다.");
+    process.exit(1);
+  }
+
+  console.log(`\n✓ DNS sync process completed! (${applied} RRSet changes)`);
+}
+
+/**
+ * 거부된 RRSet 을 사람이 고칠 수 있는 형태로 찍는다.
+ * "어떤 이름이, 무엇을 하려다, 왜" 세 가지가 한 줄에 다 있어야 한다.
+ */
+function reportFailures(failures: PatchFailure[]): void {
+  if (failures.length === 0) return;
+  console.error(`\n거부된 RRSet ${failures.length}건:`);
+  for (const { rrsets, detail } of failures) {
+    const ops = rrsets.map((r) => `${r.changetype} ${r.type}`).join(", ");
+    console.error(`   - ${rrsets[0].name} [${ops}]`);
+    console.error(`     ${detail}`);
+  }
 }
 
 /**
