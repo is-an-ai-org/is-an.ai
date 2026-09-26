@@ -1,0 +1,13 @@
+{
+   "description": "This is my personal website",
+   "owner": {
+      "github_username": "txQ2zb1QO_dNi2W1wROWE",
+      "email": "Samoj Bhattarai@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "samojbhattarai.com.np"
+      }
+   ]
+}
