@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "A",
-         "value": "103.90.86.88"
+         "type": "CNAME",
+         "value": "samojbhattarai.com.np"
       }
    ]
 }
