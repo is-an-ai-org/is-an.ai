@@ -1,0 +1,13 @@
+{
+   "description": "Pandu World 2.0 is an interactive, web-based conversational AI interface developed by Karthikeya Sirigidi. The platform connects to a custom local language model backend via a Flask proxy server, offering real-time response streaming, session history management, an incognito testing mode, and an automated server status console.\n\nProject Name: Pandu World 2.0\n\nProject Type: Web Application / AI Chat Interface\n\nWebsite Purpose: AI Assistant Console & Testing Interface\n\nDomain Requested: panduai.is-an.ai",
+   "owner": {
+      "github_username": "o6BLV1zSgScV-eBxF7hWx",
+      "email": "Futuristic-fandic-levels@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "test.panduworld.dpdns.org"
+      }
+   ]
+}
