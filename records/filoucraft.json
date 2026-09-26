@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "A",
-         "value": "216.24.57.16"
+         "type": "CNAME",
+         "value": "filoucraft-ai.onrender.com"
       }
    ]
 }
