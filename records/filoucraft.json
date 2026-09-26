@@ -8,10 +8,6 @@
       {
          "type": "CNAME",
          "value": "filoucraft-ai.onrender.com"
-      },
-      {
-         "type": "A",
-         "value": "216.24.57.1"
       }
    ]
 }
