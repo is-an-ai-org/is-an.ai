@@ -1,0 +1,13 @@
+{
+   "description": "Ai artist portfolio",
+   "owner": {
+      "github_username": "TsLK3vnLIhSFQfTke40tZ",
+      "email": "taliratra@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "taliratra-website.ap-southeast-1.thepacificwzh.com"
+      }
+   ]
+}
