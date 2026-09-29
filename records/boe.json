@@ -1,0 +1,13 @@
+{
+   "description": "links to luyou",
+   "owner": {
+      "github_username": "i4O0J6uaq6OYzLwCZzkso",
+      "email": "cidpcn@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cidpcn.v6.rocks"
+      }
+   ]
+}
