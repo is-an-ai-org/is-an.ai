@@ -1,0 +1,13 @@
+{
+   "description": "FOAI Studio is a personal project for organizing and managing AI prompts. The subdomain will be used for the project’s web application and related services.",
+   "owner": {
+      "github_username": "NvL6vrVQtw6hByEVa7Bft",
+      "email": "yhbdem@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "@ foai studio project"
+      }
+   ]
+}
