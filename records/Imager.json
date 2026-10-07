@@ -1,0 +1,13 @@
+{
+   "description": "A web for detect generated ia images",
+   "owner": {
+      "github_username": "65kgUDytszI5PSO0D2ihQ",
+      "email": "tabloui@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cname.vercel-dns.com"
+      }
+   ]
+}
