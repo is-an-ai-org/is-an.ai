@@ -230,6 +230,41 @@ function validateRecord(record: RecordDefinition, isVendor: boolean): string | n
   return null;
 }
 
+/**
+ * 에러는 아니지만 "적은 대로 게시되지 않는" 경우를 알린다.
+ *
+ * CNAME 은 RFC 1034 상 같은 이름의 다른 타입과 공존할 수 없다. 저장소는 이걸
+ * 막지 않고 있고(현재 47개 파일이 해당), 배포 스크립트가 알아서 A/AAAA 를
+ * 살리거나 CNAME 을 ALIAS 로 바꿔 넣는다. 동작은 하지만, 올린 사람 입장에서는
+ * 자기가 적은 것과 다른 게 게시된다. 차단하면 이미 멀쩡히 돌고 있는 24건이
+ * 수정 불가가 되므로, 막지 않고 무슨 일이 일어나는지만 알린다.
+ */
+function collectRecordWarnings(content: RecordFileContent): string[] {
+  const warnings: string[] = [];
+  if (!content.record || !Array.isArray(content.record)) return warnings;
+
+  const types = new Set(
+    content.record
+      .filter((r) => r && typeof r.type === "string")
+      .map((r) => r.type.toUpperCase())
+  );
+  if (!types.has("CNAME") || types.size === 1) return warnings;
+
+  if (types.has("A") || types.has("AAAA")) {
+    warnings.push(
+      "CNAME cannot coexist with A/AAAA on the same name (RFC 1034). " +
+        "The CNAME will be DROPPED and only the A/AAAA records published."
+    );
+  } else {
+    const others = [...types].filter((t) => t !== "CNAME").join(", ");
+    warnings.push(
+      `CNAME cannot coexist with ${others} on the same name (RFC 1034). ` +
+        "The CNAME will be published as an ALIAS record instead."
+    );
+  }
+  return warnings;
+}
+
 function validateFileContent(content: RecordFileContent, filePath: string): string[] {
   const errors: string[] = [];
   const subdomain = getSubdomainFromFilename(filePath);
@@ -340,6 +375,7 @@ async function validatePR(): Promise<void> {
   console.log(`Added: ${ADDED_FILES.length}, Modified: ${MODIFIED_FILES.length}, Deleted: ${DELETED_FILES.length}`);
 
   const errors: ValidationError[] = [];
+  const warnings: ValidationError[] = [];
   const skipEmailCheck = isBotAuthor();
 
   if (skipEmailCheck) {
@@ -364,6 +400,9 @@ async function validatePR(): Promise<void> {
     const contentErrors = validateFileContent(content, file);
     for (const err of contentErrors) {
       errors.push({ file, message: err });
+    }
+    for (const warn of collectRecordWarnings(content)) {
+      warnings.push({ file, message: warn });
     }
 
     // Email ownership check
@@ -398,6 +437,9 @@ async function validatePR(): Promise<void> {
     const contentErrors = validateFileContent(content, file);
     for (const err of contentErrors) {
       errors.push({ file, message: err });
+    }
+    for (const warn of collectRecordWarnings(content)) {
+      warnings.push({ file, message: warn });
     }
 
     // Load base version to check ownership
@@ -480,8 +522,17 @@ async function validatePR(): Promise<void> {
   }
 
   // Report results
+  for (const { file, message } of warnings) {
+    console.log(`::warning file=${file}::${message}`);
+    console.log(`  [warn] ${file}: ${message}`);
+  }
+
   if (errors.length === 0) {
-    console.log("\n✓ All validations passed!");
+    console.log(
+      warnings.length === 0
+        ? "\n✓ All validations passed!"
+        : `\n✓ All validations passed (${warnings.length} warning(s)).`
+    );
     return;
   }
 

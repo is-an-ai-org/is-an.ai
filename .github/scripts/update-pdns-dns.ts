@@ -406,14 +406,19 @@ async function processChanges(): Promise<void> {
         }
 
         // (C) CNAME -> ALIAS conversion conditions
-        // 1. Root domain
+        // 판정 기준은 "파일이 원하는 최종 상태"다. PowerDNS 의 현재 상태로
+        // 판정하면 순서에 따라 결과가 갈린다:
+        //   TXT 먼저 -> CNAME 추가  = existingTypes 에 CNAME 이 없다 -> ALIAS ✓
+        //   CNAME 먼저 -> TXT 추가  = existingTypes 가 {CNAME} -> 변환 안 함 ✗
+        // 후자에서 CNAME 이 그대로 남은 채 TXT 가 나가고, PowerDNS 가
+        // "Conflicts with pre-existing RRset" 으로 422 를 던진다.
+        // 2026-09-21 tree-vision 이 이 경로로 들어와 배포와 전체 동기화가
+        // 동시에 멈췄다. 파일 기준으로 보면 두 순서가 같은 결과가 된다.
         if (subdomain === "@") {
           console.log(`✨ Root CNAME -> ALIAS for ${fqdn}`);
           finalType = "ALIAS";
-        }
-        // 2. Mixed with other types (TXT, MX, etc.) - check existing PDNS state
-        else if (existingTypes.size > 0 && !existingTypes.has("CNAME")) {
-          // Other records (A, TXT, etc.) already exist but we're adding a CNAME -> convert to ALIAS for coexistence
+        } else if (recordsByType.size > 1) {
+          // 같은 이름에 CNAME 말고 다른 타입이 더 있다 -> 공존을 위해 ALIAS
           console.log(`✨ CNAME -> ALIAS (Mixed types) for ${fqdn}`);
           finalType = "ALIAS";
         }
@@ -438,13 +443,14 @@ async function processChanges(): Promise<void> {
 
     // Delete existing record types that are no longer in the record file
     // This ensures the subdomain is fully synced (e.g., old CNAME removed when switching to A)
+    // 위 (C) 와 정확히 같은 규칙이어야 한다. 어긋나면 ALIAS 를 새로 넣으면서
+    // 기존 CNAME 을 안 지워 같은 이름에 둘이 남고, 그 PATCH 가 422 로 죽는다.
     const newTypes = new Set(
       Array.from(recordsByType.keys()).map((t) => {
-        // Account for CNAME -> ALIAS conversion
         if (t === "CNAME") {
           const hasIP = recordsByType.has("A") || recordsByType.has("AAAA");
           if (hasIP) return null; // CNAME was ignored
-          if (subdomain === "@") return "ALIAS";
+          if (subdomain === "@" || recordsByType.size > 1) return "ALIAS";
         }
         return t;
       }).filter((t): t is string => t !== null)
