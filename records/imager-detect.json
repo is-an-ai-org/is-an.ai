@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "65kgUDytszI5PSO0D2ihQ",
+      "email": "tabloui@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "imager-detect.netlify.app"
+      }
+   ]
+}
