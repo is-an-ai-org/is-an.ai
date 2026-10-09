@@ -147,22 +147,8 @@ function isMxRecordValue(value: any): value is MxRecordValue {
   );
 }
 
-/**
- * 비교 전용 타입 정규화.
- *
- * 저장소는 항상 CNAME으로 적지만, apex이거나 다른 타입과 공존하면
- * PowerDNS에는 ALIAS로 들어간다(아래 payload 빌더의 규칙). 이걸 정규화하지 않으면
- * 해당 레코드들이 매 실행 toCreate와 toDelete 양쪽에 영구히 걸린다.
- * signature 키에만 쓰고, RecordSignature.type 자체는 원본을 유지한다
- * (DELETE는 PowerDNS에 실제로 존재하는 타입으로 나가야 하므로).
- */
-function signatureType(type: string): string {
-  return type.toUpperCase() === "ALIAS" ? "CNAME" : type;
-}
-
 function createRecordSignature(record: RecordSignature): string {
-  const { subdomain, priority } = record;
-  const type = signatureType(record.type);
+  const { subdomain, type, priority } = record;
   // 콘텐츠 정규화를 시그니처 단계에서 적용한다.
   // 예전에는 payload를 만들 때만 정규화해서, 저장소의 "example.com" 과
   // PowerDNS의 "example.com." 이 영구히 다른 것으로 잡혔다
@@ -200,7 +186,7 @@ function subdomainToFqdn(subdomain: string): string {
 }
 
 function normalizeContent(type: string, content: string): string {
-  const typesNeedingDot = ["CNAME", "MX", "NS", "SRV", "PTR"];
+  const typesNeedingDot = ["CNAME", "ALIAS", "MX", "NS", "SRV", "PTR"];
   const upperType = type.toUpperCase();
 
   if (typesNeedingDot.includes(type.toUpperCase())) {
@@ -585,6 +571,20 @@ async function syncDNSRecords(): Promise<void> {
   }
   console.log(`Injected ${INFRA_RECORDS.length} infrastructure records`);
 
+  // Resolve types before diffing so an unchanged target still triggers CNAME/ALIAS migration.
+  for (const [subdomain, records] of repositoryRecordsMap) {
+    const hasIP = records.some((r) => r.type === "A" || r.type === "AAAA");
+    const needsAlias = subdomain === "@" || records.some((r) => r.type !== "CNAME");
+    repositoryRecordsMap.set(
+      subdomain,
+      records
+        .filter((r) => !(hasIP && r.type === "CNAME"))
+        .map((r) =>
+          r.type === "CNAME" && needsAlias ? { ...r, type: "ALIAS" } : r
+        )
+    );
+  }
+
   // 2. Convert PDNS state into a comparable Map
   const pdnsSignatures = new Map<string, RecordSignature>();
   for (const rrset of pdnsRRSets) {
@@ -721,29 +721,9 @@ async function syncDNSRecords(): Promise<void> {
         repoRecordsForRrset = [repoRecordsForRrset[0]];
       }
 
-      let finalType = type;
-      if (type === "CNAME") {
-        const allRecords = repositoryRecordsMap.get(subdomain) || [];
-        const hasIPRecords = allRecords.some(
-          (r) => r.type === "A" || r.type === "AAAA"
-        );
-
-        if (hasIPRecords) {
-          console.warn(
-            `⚠️ Conflict: CNAME cannot coexist with A/AAAA. Ignoring CNAME.`
-          );
-          continue;
-        }
-        if (fqdn === ZONE_FQDN) finalType = "ALIAS";
-        const hasOtherTypes = allRecords.some((r) => r.type !== "CNAME");
-        if (hasOtherTypes && finalType === "CNAME") finalType = "ALIAS";
-        // Note: child subdomains (e.g., _acme-challenge.api under api) do NOT
-        // conflict with CNAME per RFC. Only same-name records conflict.
-      }
-
       patchPayload.push({
         name: fqdn,
-        type: finalType,
+        type,
         ttl: DEFAULT_TTL,
         changetype: "REPLACE",
         records: repoRecordsForRrset.map((r) => {

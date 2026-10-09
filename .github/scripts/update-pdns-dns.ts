@@ -384,6 +384,8 @@ async function processChanges(): Promise<void> {
       recordsByType.get(r.type)!.push(r);
     }
 
+    const newTypes = new Set<string>();
+
     // Process each type
     for (const [type, records] of recordsByType.entries()) {
       let finalType = type;
@@ -411,9 +413,8 @@ async function processChanges(): Promise<void> {
           console.log(`✨ Root CNAME -> ALIAS for ${fqdn}`);
           finalType = "ALIAS";
         }
-        // 2. Mixed with other types (TXT, MX, etc.) - check existing PDNS state
-        else if (existingTypes.size > 0 && !existingTypes.has("CNAME")) {
-          // Other records (A, TXT, etc.) already exist but we're adding a CNAME -> convert to ALIAS for coexistence
+        // Coexistence depends on the requested final state.
+        else if (recordsByType.size > 1) {
           console.log(`✨ CNAME -> ALIAS (Mixed types) for ${fqdn}`);
           finalType = "ALIAS";
         }
@@ -421,6 +422,7 @@ async function processChanges(): Promise<void> {
         // Stale type cleanup is handled after the type loop below
       }
 
+      newTypes.add(finalType);
       patchPayload.push({
         name: fqdn,
         type: finalType,
@@ -438,18 +440,6 @@ async function processChanges(): Promise<void> {
 
     // Delete existing record types that are no longer in the record file
     // This ensures the subdomain is fully synced (e.g., old CNAME removed when switching to A)
-    const newTypes = new Set(
-      Array.from(recordsByType.keys()).map((t) => {
-        // Account for CNAME -> ALIAS conversion
-        if (t === "CNAME") {
-          const hasIP = recordsByType.has("A") || recordsByType.has("AAAA");
-          if (hasIP) return null; // CNAME was ignored
-          if (subdomain === "@") return "ALIAS";
-        }
-        return t;
-      }).filter((t): t is string => t !== null)
-    );
-
     for (const existType of existingTypes) {
       if (!newTypes.has(existType)) {
         console.log(`🧹 Cleanup: Deleting stale ${existType} for ${fqdn}`);
