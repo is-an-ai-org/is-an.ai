@@ -1,7 +1,8 @@
 {
   "scripts": {
     "typecheck": "tsc -p .github/scripts/tsconfig.json --noEmit",
-    "build:scripts": "tsc -p .github/scripts/tsconfig.json"
+    "build:scripts": "tsc -p .github/scripts/tsconfig.json",
+    "test": "npm run build:scripts && node --test .github/tests/*.test.cjs"
   },
   "dependencies": {
     "axios": "^1.13.2",
