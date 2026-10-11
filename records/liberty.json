@@ -12,6 +12,10 @@
       {
          "type": "TXT",
          "value": "pitter-verify=8b20b9d49fc99d0bde63e454d68be2272dc9a22bfc1ffa6a"
+      },
+      {
+         "type": "TXT",
+         "value": "did=did:plc:kdmifvpdserarh73bxiwmqy2"
       }
    ]
 }
