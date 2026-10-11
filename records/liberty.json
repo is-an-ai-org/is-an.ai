@@ -8,6 +8,10 @@
       {
          "type": "TXT",
          "value": "pitter-verify=7f4dd216890d02d46a08491bbff9aa32603234451d6b0aa4"
+      },
+      {
+         "type": "TXT",
+         "value": "pitter-verify=8b20b9d49fc99d0bde63e454d68be2272dc9a22bfc1ffa6a"
       }
    ]
 }
