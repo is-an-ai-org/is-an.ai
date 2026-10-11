@@ -1,0 +1,13 @@
+{
+   "description": "sub domain",
+   "owner": {
+      "github_username": "356dG9gBo9Xrf1JnvTQTX",
+      "email": "arutsuchimotti-ux@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "pitter-verify=7f4dd216890d02d46a08491bbff9aa32603234451d6b0aa4"
+      }
+   ]
+}
