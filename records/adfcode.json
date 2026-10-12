@@ -1,0 +1,13 @@
+{
+   "description": "verify",
+   "owner": {
+      "github_username": "356dG9gBo9Xrf1JnvTQTX",
+      "email": "arutsuchimotti-ux@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "iplot-verify=3aa74e99-de89-4cc1-8413-4e55b21484db"
+      }
+   ]
+}
