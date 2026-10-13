@@ -1,0 +1,13 @@
+{
+   "description": "blong",
+   "owner": {
+      "github_username": "JjRq_cZtTIcMEK0MtOrT3",
+      "email": "hhiet@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "newsp.pages.dev"
+      }
+   ]
+}
