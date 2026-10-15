@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "t0sKjb9c_VUBf6TdYiJdd",
+      "email": "Zaid Sayyed@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "minecraft.stratica.ai"
+      }
+   ]
+}
