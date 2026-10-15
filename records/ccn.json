@@ -6,8 +6,12 @@
    },
    "record": [
       {
+         "type": "TXT",
+         "value": "reclaim-u4eisap8fwxpskws6s9gjsbu8tdqqaav"
+      },
+      {
          "type": "CNAME",
-         "value": "f599ab03.ccn.94v.net.dnsoe3.com"
+         "value": "edgeonereclaim.ccn"
       }
    ]
 }
