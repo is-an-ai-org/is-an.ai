@@ -6,12 +6,8 @@
    },
    "record": [
       {
-         "type": "TXT",
-         "value": "reclaim-u4eisap8fwxpskws6s9gjsbu8tdqqaav"
-      },
-      {
          "type": "CNAME",
-         "value": "edgeonereclaim.ccn"
+         "value": "a.com"
       }
    ]
 }
