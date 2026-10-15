@@ -1,0 +1,13 @@
+{
+   "description": "Bing每日一图",
+   "owner": {
+      "github_username": "ou6kNFE5Bh71jmQzLHUJL",
+      "email": "hoyes2000@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "f599ab03.ccn.94v.net.dnsoe3.com"
+      }
+   ]
+}
