@@ -1,0 +1,13 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "7CNQEvqgHmmoqIssf5ElH",
+      "email": "laconic-1@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "rahan.pages.dev"
+      }
+   ]
+}
