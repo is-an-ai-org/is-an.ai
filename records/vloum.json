@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "G4OQ6HaK2jbMm6v8c5vAo",
+      "email": "christ_gnabo@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "cname.vercel-dns.com"
+      },
+      {
+         "type": "A",
+         "value": "76.76.21.21"
+      }
+   ]
+}
