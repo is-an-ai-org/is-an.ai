@@ -1,0 +1,13 @@
+{
+   "description": "portfolio website",
+   "owner": {
+      "github_username": "ChmBmsQpjTuGp9MXecjnI",
+      "email": "Pratham Harer@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "pratham1603.github.io"
+      }
+   ]
+}
