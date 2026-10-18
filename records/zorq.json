@@ -1,0 +1,9 @@
+{
+  "description": "ZORQ Studio - AI automation and creative studio",
+  "owner": {
+    "email": "jjafri45@gmail.com"
+  },
+  "record": [
+    { "type": "CNAME", "value": "jjafri45.github.io" }
+  ]
+}
