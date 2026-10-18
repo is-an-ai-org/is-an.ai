@@ -1,0 +1,9 @@
+{
+  "description": "OCX — software factory",
+  "owner": {
+    "email": "thanhchatvn@gmail.com"
+  },
+  "record": [
+    { "type": "A", "value": "115.79.46.132" }
+  ]
+}
