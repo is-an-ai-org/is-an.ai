@@ -1,0 +1,13 @@
+{
+   "description": "One-command launcher for github.com/PShuvaev/ltt AI console editor",
+   "owner": {
+      "github_username": "L9_ziXS80AGzscTtpO6p1",
+      "email": "Pavel Shuvaev@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "pshuvaev.github.io"
+      }
+   ]
+}
