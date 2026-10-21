@@ -17,6 +17,12 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
     ['add TXT to CNAME', [rrset('CNAME', target + '.')], [cname, txt], ['ALIAS', 'TXT']],
     ['create mixed records', [], [cname, txt], ['ALIAS', 'TXT']],
     ['remove TXT from ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname], ['CNAME']],
+    ['ignore out-of-zone records', [
+      rrset('CNAME', target + '.'),
+      { ...rrset('CNAME', 'api.is-an.ai.'), name: 'is-an-ai-worker-production.doridori.workers.dev.' },
+      { ...rrset('CNAME', 'api.is-an.ai.'), name: 'notis-an.ai.' },
+      { ...rrset('CNAME', 'api.is-an.ai.'), name: 'is-an.ai.example.com.' },
+    ], [cname], ['CNAME']],
     ['keep existing ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname, txt], ['ALIAS', 'TXT']],
     ['replace CNAME with IP', [rrset('CNAME', target + '.')], [cname, { type: 'A', value: '192.0.2.1' }], ['A']],
   ]) {
@@ -70,6 +76,13 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         });
         await run();
         assert.deepEqual(state.filter(r => r.name === name).map(r => r.type).sort(), expected.sort());
+        if (label === 'ignore out-of-zone records') {
+          for (const external of initial.slice(1)) {
+            assert.deepEqual(state.find(r => r.name === external.name), external);
+            assert.equal(patches.flat().some(r => r.name.startsWith(external.name)), false,
+              'out-of-zone records must not generate writes');
+          }
+        }
         if (script === 'sync-pdns-dns') {
           patches.length = 0;
           await run();

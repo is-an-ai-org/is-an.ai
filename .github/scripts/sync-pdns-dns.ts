@@ -159,7 +159,7 @@ function createRecordSignature(record: RecordSignature): string {
     : `${subdomain}:${type}:${content}`;
 }
 
-function fqdnToSubdomain(fqdn: string): string {
+function fqdnToSubdomain(fqdn: string): string | null {
   // PowerDNS가 돌려주는 name은 항상 끝점이 있다("foo.is-an.ai.").
   // 예전 구현은 끝점 없는 PDNS_ZONE으로 잘라내 "foo." 를 만들었고,
   // 저장소 쪽 키 "foo" 와 전부 어긋나 diff가 통째로 무의미해졌다.
@@ -168,7 +168,7 @@ function fqdnToSubdomain(fqdn: string): string {
   if (normalized.endsWith(`.${ZONE}`)) {
     return normalized.slice(0, -(ZONE.length + 1));
   }
-  return normalized;
+  return null;
 }
 
 function subdomainToFqdn(subdomain: string): string {
@@ -359,6 +359,11 @@ function convertPdnsRRSetToSignatures(
 ): RecordSignature[] {
   const signatures: RecordSignature[] = [];
   const subdomain = fqdnToSubdomain(rrset.name);
+  // External names must never be rewritten as subdomains of this zone.
+  if (subdomain === null) {
+    console.warn(`⚠️ Ignoring out-of-zone RRSet: ${rrset.name} (${rrset.type})`);
+    return signatures;
+  }
 
   for (const record of rrset.records) {
     let content = record.content;
