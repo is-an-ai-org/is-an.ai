@@ -1,0 +1,13 @@
+{
+   "description": "TXT verify",
+   "owner": {
+      "github_username": "sziQq4er-Ha0V1TMBJYBA",
+      "email": "Mrinal Joshi@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=positivecontrol.is-an.ai,6b848252c7ade3a0e7e8"
+      }
+   ]
+}
