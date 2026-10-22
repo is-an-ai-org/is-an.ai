@@ -1,0 +1,13 @@
+{
+   "description": "life",
+   "owner": {
+      "github_username": "4t7qzqE00eP4i2ZVFmO1y",
+      "email": "mgjkjku@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "melove.pages.dev"
+      }
+   ]
+}
