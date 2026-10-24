@@ -1,0 +1,17 @@
+{
+   "description": "Intelligence Beyond Limits.",
+   "owner": {
+      "github_username": "rEHpW6zjeP7Pb07VP2KLt",
+      "email": "DeadlyGhost@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "f6770a5f84e0e9ca.vercel-dns-017.com"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=aera.is-an.ai,2f5d76e896d8ce2ca3a7"
+      }
+   ]
+}
