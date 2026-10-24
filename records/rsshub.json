@@ -1,5 +1,5 @@
 {
-   "description": "clawcloud, rsshub",
+   "description": "koyeb, rsshub",
    "owner": {
       "github_username": "4XGTq3TRccGxRpeZD0fYx",
       "email": "alphauniverse@noreply.com"
@@ -7,7 +7,7 @@
    "record": [
       {
          "type": "CNAME",
-         "value": "gxmxwmcbtkun.us-west-1.clawcloudrun.com"
+         "value": "2756dbb3-991e-4125-9120-fd379ccff58d.cname.koyeb.app"
       }
    ]
 }
