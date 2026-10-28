@@ -1,0 +1,13 @@
+{
+   "description": "the new website new generation",
+   "owner": {
+      "github_username": "Rv6eDwVgbjnmcN_j2dy5b",
+      "email": "Wayne@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "incelstn.github.io"
+      }
+   ]
+}
