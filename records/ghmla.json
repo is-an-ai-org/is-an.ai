@@ -1,0 +1,13 @@
+{
+   "description": "tools",
+   "owner": {
+      "github_username": "cT58fxURGqIzrXOVmZvL5",
+      "email": "povbg@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "gdfd.pafes.dev"
+      }
+   ]
+}
