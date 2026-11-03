@@ -1,0 +1,13 @@
+{
+   "description": "Barycenter personal agent coordinator",
+   "owner": {
+      "github_username": "dohyun-ko",
+      "email": "dohyun682@gmail.com"
+   },
+   "record": [
+      {
+         "type": "A",
+         "value": "152.67.222.94"
+      }
+   ]
+}
