@@ -1,5 +1,5 @@
 {
-   "description": "Hearth: an agent that searches London rentals, by Mrinal Joshi.",
+   "description": "Hearth: an agent that searches London rentals and only sends the good ones, by Mrinal Joshi.",
    "owner": {
       "github_username": "sziQq4er-Ha0V1TMBJYBA",
       "email": "Mrinal Joshi@noreply.com"
