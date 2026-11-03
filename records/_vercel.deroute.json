@@ -1,0 +1,13 @@
+{
+   "description": "Vercel verify",
+   "owner": {
+      "github_username": "sziQq4er-Ha0V1TMBJYBA",
+      "email": "Mrinal Joshi@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=deroute.is-an.ai,235082c895ec39e1e964"
+      }
+   ]
+}
