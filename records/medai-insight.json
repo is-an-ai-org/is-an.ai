@@ -1,0 +1,13 @@
+{
+   "description": "Independent insights into medical AI, clinical research and technology.",
+   "owner": {
+      "github_username": "5NPr-KHp2rZ06kfUKqN3H",
+      "email": "jinwenhao62-bit@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "custom-domains.chatgpt.site"
+      }
+   ]
+}
