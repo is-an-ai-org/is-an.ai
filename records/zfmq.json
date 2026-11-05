@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "GzAzVRW07gkXyV3OQKOgW",
+      "email": "baigujing20@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "meipku.pages.dev"
+      }
+   ]
+}
