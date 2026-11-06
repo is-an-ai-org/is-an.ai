@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import axios, { AxiosInstance } from "axios";
 import punycode from "punycode";
+import { notifySecondaries } from "./verify-pdns";
 
 // --- PowerDNS API 5.0 Interfaces ---
 
@@ -537,28 +538,9 @@ async function processChanges(): Promise<void> {
   if (!success) process.exit(1);
 
   // 6. Send NOTIFY - trigger immediate zone transfer to secondaries (HE, etc.)
-  await sendPdnsNotify();
+  await notifySecondaries(pdnsClient, PDNS_ZONE);
 
   console.log("\n✓ Incremental update completed successfully!");
-}
-
-/**
- * Send PowerDNS NOTIFY to trigger immediate AXFR on secondary nameservers (HE, etc.).
- * Without NOTIFY, secondaries may wait hours or a full day to pick up SOA serial changes.
- */
-async function sendPdnsNotify(): Promise<void> {
-  try {
-    await pdnsClient.put(
-      `/api/v1/servers/localhost/zones/${PDNS_ZONE}/notify`
-    );
-    console.log("✓ NOTIFY sent to secondaries (HE, etc.) - zone propagation triggered");
-  } catch (error: any) {
-    // NOTIFY failure is non-fatal - secondaries will sync via AXFR later
-    console.warn(
-      "⚠️ Failed to send NOTIFY (zone is already updated):",
-      error.response?.data?.error || error.message
-    );
-  }
 }
 
 async function executePdnsPatch(

@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import axios, { AxiosInstance } from "axios";
 import punycode from "punycode";
+import { notifySecondaries } from "./verify-pdns";
 
 // --- PowerDNS API 5.0 Interfaces ---
 interface PdnsApiGetRecord {
@@ -754,6 +755,7 @@ async function syncDNSRecords(): Promise<void> {
 
   if (patchPayload.length === 0) {
     console.log("✓ DNS records are already in sync!");
+    if (!DRY_RUN) await notifySecondaries(pdnsClient, PDNS_ZONE);
     return;
   }
 
@@ -791,6 +793,7 @@ async function syncDNSRecords(): Promise<void> {
     console.log(
       "✓ DNS records are already in sync (Protected records were skipped)."
     );
+    if (!DRY_RUN) await notifySecondaries(pdnsClient, PDNS_ZONE);
     return;
   }
 
@@ -841,28 +844,9 @@ async function syncDNSRecords(): Promise<void> {
   }
 
   // Send NOTIFY - trigger immediate zone transfer to secondaries (HE, etc.)
-  await sendPdnsNotify();
+  await notifySecondaries(pdnsClient, PDNS_ZONE);
 
   console.log(`\n✓ DNS sync process completed!`);
-}
-
-/**
- * Send PowerDNS NOTIFY to trigger immediate AXFR on secondary nameservers (HE, etc.).
- */
-async function sendPdnsNotify(): Promise<void> {
-  try {
-    await pdnsClient.put(
-      `/api/v1/servers/localhost/zones/${PDNS_ZONE}/notify`
-    );
-    console.log("✓ NOTIFY sent to secondaries (HE, etc.) - zone propagation triggered");
-  } catch (error: unknown) {
-    console.warn(
-      "⚠️ Failed to send NOTIFY (zone is already updated):",
-      error && typeof error === "object" && "message" in error
-        ? (error as Error).message
-        : String(error)
-    );
-  }
 }
 
 // --- Main Execution ---

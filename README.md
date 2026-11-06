@@ -59,7 +59,15 @@ Automated DNS synchronization keeps repository records in sync with PowerDNS:
 
 - **On merge**: Incremental deployment via GitHub Actions
 - **Daily at 2 AM UTC**: Full sync with drift detection
+- **Every 15 minutes**: Read-only checks against all five HE public nameservers
+- **After deployment**: Verify the SOA serial and an enabled A/AAAA/CNAME probe against PowerDNS; stale or incorrect public answers fail the run
 - **Protected subdomains**: System subdomains (www, api, docs, ns1, etc.) are never deleted
+
+To retry propagation without changing records or the SOA serial, run **Sync DNS Records (Full Sync)** with `notify_only=true` and `dry_run=false`.
+Set `probe_name` to the affected hostname, such as `barycenter.is-an.ai`; otherwise the probe is `www` in the managed zone.
+The check retries up to 60 times at five-second intervals, querying each nameserver over IPv4 from the runner. It verifies the selected probe, not every record or every geographic DNS endpoint.
+GitHub schedules can be delayed. Failed scheduled/full-sync checks create one open `sync-failure` issue; close it after resolving the incident to allow a new alert.
+NOTIFY asks the configured secondaries to refresh; it cannot force a provider to complete a transfer.
 
 ## Vendor Subdomains
 

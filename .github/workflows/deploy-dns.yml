@@ -103,7 +103,6 @@ jobs:
           emit deleted_files D
 
       - name: Set up Node and compile scripts
-        if: steps.range.outputs.has_changes == 'true'
         uses: ./.github/actions/setup
 
       - name: Update DNS via PowerDNS API (Incremental)
@@ -130,6 +129,15 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: node .github/scripts/sync-db.js
         timeout-minutes: 2
+
+      - name: Verify public DNS propagation
+        env:
+          PDNS_API_KEY: ${{ secrets.PDNS_API_KEY }}
+          PDNS_API_URL: http://pdns-auth:8081
+          PDNS_ZONE: ${{ secrets.PDNS_ZONE }}
+          NOTIFY_ONLY: ${{ steps.range.outputs.has_changes != 'true' }}
+        run: node .github/scripts/verify-pdns.js
+        timeout-minutes: 10
 
       # 위 단계가 모두 성공했을 때만 마커를 전진시킨다.
       # 실패하거나 런이 취소되면 마커가 그대로 남아 다음 런이 같은 범위를 다시 배포한다(REPLACE는 멱등).
