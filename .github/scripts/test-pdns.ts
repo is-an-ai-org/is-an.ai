@@ -114,15 +114,8 @@ async function getZoneRRSets(zone: string): Promise<PdnsApiGetRRSet[]> {
     );
     const zoneInfo: PdnsZoneInfo = response.data;
 
-    // SOA serial 과 notified_serial 은 PdnsZoneInfo 에 선언만 돼 있고 출력된 적이 없었다.
-    // 이 두 값이 SOA/NOTIFY 문제를 진단하는 가장 값싼 수단이다.
-    //  - serial 이 안 오르면: 배포가 SOA 를 갱신하지 못한 것
-    //  - notified_serial < serial 이면: NOTIFY 가 세컨더리에 닿지 않은 것
     console.log(
-      `SOA serial: ${zoneInfo.serial}, notified_serial: ${zoneInfo.notified_serial}` +
-        (zoneInfo.notified_serial < zoneInfo.serial
-          ? "  ⚠️ 세컨더리가 아직 최신 serial 을 통지받지 못했습니다"
-          : "")
+      `SOA serial: ${zoneInfo.serial}, notified_serial: ${zoneInfo.notified_serial} (not a secondary acknowledgement)`
     );
 
     return zoneInfo.rrsets || [];
@@ -311,6 +304,26 @@ async function testSpecificRecord(
 
 // --- Main Execution ---
 
+async function testReplication(zone: string): Promise<void> {
+  const base = `/api/v1/servers/localhost/zones/${encodeURIComponent(zone)}`;
+  const [info, metadata, config] = await Promise.all([
+    pdnsClient.get<PdnsZoneInfo>(base, { params: { rrsets: false } }),
+    pdnsClient.get<{ metadata: string[] }>(`${base}/metadata/ALSO-NOTIFY`),
+    pdnsClient.get<{ name: string; value: string }[]>("/api/v1/servers/localhost/config"),
+  ]);
+  const settings = config.data.filter(({ name }) =>
+    ["also-notify", "only-notify", "primary", "secondary"].includes(name)
+  );
+  console.log(JSON.stringify({
+    zone: info.data.name,
+    kind: info.data.kind,
+    serial: info.data.serial,
+    notified_serial: info.data.notified_serial,
+    zone_also_notify: metadata.data.metadata,
+    settings,
+  }, null, 2));
+}
+
 async function main(): Promise<void> {
   console.log("PowerDNS 테스트 스크립트\n");
   console.log(`API URL: ${PDNS_API_URL}`);
@@ -327,6 +340,8 @@ async function main(): Promise<void> {
     } else if (command === "zone" && args[1]) {
       // 특정 존 조회: node test-pdns.js zone grrr.site.
       await testSpecificZone(args[1]);
+    } else if (command === "replication" && (args[1] || PDNS_ZONE)) {
+      await testReplication(args[1] || PDNS_ZONE);
     } else if (command === "record" && args[1] && args[2] && args[3]) {
       // 특정 레코드 조회: node test-pdns.js record grrr.site. @ A
       // 또는: node test-pdns.js record grrr.site. test A
@@ -345,6 +360,7 @@ async function main(): Promise<void> {
       console.log("  node test-pdns.js                    # 모든 존 통계 출력");
       console.log("  node test-pdns.js list               # 모든 존 통계 출력");
       console.log("  node test-pdns.js zone <zone>        # 특정 존 상세 정보");
+      console.log("  node test-pdns.js replication <zone> # NOTIFY 설정 조회");
       console.log(
         "  node test-pdns.js record <zone> <subdomain> <type>  # 특정 레코드 조회"
       );
