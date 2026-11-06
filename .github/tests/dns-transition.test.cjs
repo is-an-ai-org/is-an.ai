@@ -31,8 +31,16 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
       let state = [...initial, { name: 'is-an.ai.', type: 'SOA', ttl: 3600,
         records: [{ content: 'ns1.is-an.ai. hostmaster.is-an.ai. 2026092104 10800 3600 604800 300', disabled: false }] }];
       const patches = [];
+      let notifies = 0;
+      let failNotify = false;
       const server = createServer(async (req, res) => {
         res.setHeader('Content-Type', 'application/json');
+        if (req.method === 'PUT' && req.url.endsWith('/notify')) {
+          notifies++;
+          if (failNotify) res.statusCode = 503;
+          res.end('{}');
+          return;
+        }
         if (req.method === 'GET') {
           res.end(JSON.stringify({ rrsets: state }));
           return;
@@ -64,9 +72,9 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         await mkdir(path.join(workspace, 'records'));
         await writeFile(path.join(workspace, 'records/Tree-Vision.json'), JSON.stringify({ record: records }));
         await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-        const run = () => new Promise((resolve, reject) => {
+        const run = extraEnv => new Promise((resolve, reject) => {
           const child = spawn(process.execPath, [path.join(__dirname, `../scripts/${script}.js`)], {
-            env: { ...process.env, PDNS_API_URL: `http://127.0.0.1:${server.address().port}`, PDNS_API_KEY: 'test', PDNS_ZONE: 'is-an.ai.', GITHUB_WORKSPACE: workspace, MODIFIED_FILES: 'records/Tree-Vision.json', ADDED_FILES: '', DELETED_FILES: '', DRY_RUN: 'false' },
+            env: { ...process.env, PDNS_API_URL: `http://127.0.0.1:${server.address().port}`, PDNS_API_KEY: 'test', PDNS_ZONE: 'is-an.ai.', GITHUB_WORKSPACE: workspace, MODIFIED_FILES: 'records/Tree-Vision.json', ADDED_FILES: '', DELETED_FILES: '', DRY_RUN: 'false', ...extraEnv },
           });
           let output = '';
           child.stdout.on('data', data => output += data);
@@ -85,8 +93,17 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         }
         if (script === 'sync-pdns-dns') {
           patches.length = 0;
+          const beforeNotify = notifies;
           await run();
           assert.equal(patches.length, 0, 'second full sync must have no changes');
+          assert.equal(notifies, beforeNotify + 1, 'an unchanged zone must still notify secondaries');
+          await run({ DRY_RUN: 'true' });
+          assert.equal(patches.length, 0, 'dry run must not write records');
+          assert.equal(notifies, beforeNotify + 1, 'dry run must not send NOTIFY');
+        }
+        if (label === 'create mixed records') {
+          failNotify = true;
+          await assert.rejects(run(), /PowerDNS NOTIFY failed/);
         }
       } finally {
         await new Promise(resolve => server.close(resolve));
