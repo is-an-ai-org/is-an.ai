@@ -60,7 +60,7 @@ export async function verifyDns(
   client: AxiosInstance,
   zoneValue: string,
   probeValue: string,
-  recover: boolean,
+  recover: boolean | "repair-he-notify",
 ): Promise<void> {
   const zone = hostname(zoneValue);
   const probe = hostname(probeValue);
@@ -102,6 +102,27 @@ export async function verifyDns(
     );
   };
   let expected = await load();
+  if (recover === "repair-he-notify") {
+    const path = `/api/v1/servers/localhost/zones/${encodeURIComponent(zone + ".")}/metadata/ALSO-NOTIFY`;
+    const { data } = await client.get<{ metadata: string[] }>(path);
+    if (
+      !Array.isArray(data.metadata) ||
+      data.metadata.some((value) => typeof value !== "string")
+    )
+      throw new Error("PowerDNS returned invalid ALSO-NOTIFY metadata");
+    // HE receives transfer notifications at its collector, separately from public NS addresses.
+    const collector = "216.218.133.2";
+    if (!data.metadata.includes(collector)) {
+      await client.put(path, {
+        kind: "ALSO-NOTIFY",
+        metadata: [...data.metadata, collector],
+      });
+      const check = await client.get<{ metadata: string[] }>(path);
+      if (!check.data.metadata.includes(collector))
+        throw new Error("PowerDNS did not persist the HE NOTIFY target");
+    }
+    console.log(`HE transfer collector ${collector} is in ALSO-NOTIFY.`);
+  }
   if (recover) await notifySecondaries(client, zone + ".");
   let failures: string[] = [];
   for (let attempt = 1; attempt <= 60; attempt++) {
@@ -161,6 +182,9 @@ async function main(): Promise<void> {
   if (!key || !url || !zone)
     throw new Error("PDNS_API_KEY, PDNS_API_URL and PDNS_ZONE are required");
   const recover = process.env.NOTIFY_ONLY === "true";
+  const repair = process.env.REPAIR_HE_NOTIFY === "true";
+  if (repair && !recover)
+    throw new Error("HE NOTIFY repair requires NOTIFY_ONLY=true");
   if (process.env.DRY_RUN === "true")
     throw new Error(
       "Public DNS recovery/verification cannot run in dry-run mode",
@@ -171,7 +195,7 @@ async function main(): Promise<void> {
     timeout: 30000,
   });
   const probe = process.env.DNS_PROBE_NAME || `www.${hostname(zone)}`;
-  await verifyDns(client, zone, probe, recover);
+  await verifyDns(client, zone, probe, repair ? "repair-he-notify" : recover);
 }
 
 if (require.main === module) {

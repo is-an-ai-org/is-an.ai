@@ -21,6 +21,11 @@ on:
         required: false
         default: false
         type: boolean
+      repair_he_notify:
+        description: "Add HE transfer collector to zone ALSO-NOTIFY (requires notify_only=true)"
+        required: false
+        default: false
+        type: boolean
       probe_name:
         description: "Hostname to verify (enabled A/AAAA/CNAME; empty uses www in the managed zone)"
         required: false
@@ -47,6 +52,17 @@ jobs:
       - name: Set up Node and compile scripts
         uses: ./.github/actions/setup
 
+      - name: Validate recovery inputs
+        env:
+          REPAIR_HE_NOTIFY: ${{ inputs.repair_he_notify || false }}
+          NOTIFY_ONLY: ${{ inputs.notify_only || false }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+        run: |
+          if [ "$REPAIR_HE_NOTIFY" = true ] && { [ "$NOTIFY_ONLY" != true ] || [ "$DRY_RUN" = true ]; }; then
+            echo 'HE NOTIFY repair requires notify_only=true and dry_run=false.' >&2
+            exit 1
+          fi
+
       - name: Sync DNS Records
         if: ${{ !inputs.notify_only && (github.event_name != 'schedule' || github.event.schedule == '0 2 * * *') }}
         env:
@@ -66,6 +82,7 @@ jobs:
           PDNS_API_URL: http://pdns-auth:8081
           PDNS_ZONE: ${{ secrets.PDNS_ZONE }}
           NOTIFY_ONLY: ${{ inputs.notify_only || false }}
+          REPAIR_HE_NOTIFY: ${{ inputs.repair_he_notify || false }}
           DRY_RUN: ${{ inputs.dry_run || false }}
           DNS_PROBE_NAME: ${{ inputs.probe_name }}
         run: node .github/scripts/verify-pdns.js

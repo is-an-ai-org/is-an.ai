@@ -64,6 +64,35 @@ test('NOTIFY errors fail without exposing the Axios request configuration', asyn
   });
 });
 
+test('HE repair preserves existing metadata and records, persists the collector, then notifies', async t => {
+  const { client, calls, data } = fixture(t);
+  const snapshot = structuredClone(data);
+  let metadata = ['192.0.2.53'];
+  const load = client.get;
+  client.get = async url => url.endsWith('/metadata/ALSO-NOTIFY') ? { data: { metadata } } : load();
+  client.put = async (...args) => {
+    calls.put.push(args);
+    if (args[0].endsWith('/metadata/ALSO-NOTIFY')) metadata = args[1].metadata;
+  };
+  await verifyDns(client, 'is-an.ai.', 'www.is-an.ai', 'repair-he-notify');
+  assert.deepEqual(calls.put, [
+    ['/api/v1/servers/localhost/zones/is-an.ai./metadata/ALSO-NOTIFY', { kind: 'ALSO-NOTIFY', metadata: ['192.0.2.53', '216.218.133.2'] }],
+    ['/api/v1/servers/localhost/zones/is-an.ai./notify'],
+  ]);
+  assert.deepEqual(data, snapshot);
+  calls.put.length = 0;
+  await verifyDns(client, 'is-an.ai', 'www.is-an.ai', 'repair-he-notify');
+  assert.deepEqual(calls.put, [['/api/v1/servers/localhost/zones/is-an.ai./notify']]);
+});
+
+test('invalid notification metadata stops repair without writing or notifying', async t => {
+  const { client, calls } = fixture(t);
+  const load = client.get;
+  client.get = async url => url.endsWith('/metadata/ALSO-NOTIFY') ? { data: { metadata: [null] } } : load();
+  await assert.rejects(verifyDns(client, 'is-an.ai', 'www.is-an.ai', 'repair-he-notify'), /invalid ALSO-NOTIFY/);
+  assert.deepEqual(calls.put, []);
+});
+
 test('stale serials and missing answers fail after a bounded retry window', async t => {
   const { client, calls } = fixture(t, {
     serial: n => n === 2 ? 9 : 10,
@@ -119,6 +148,15 @@ test('CLI rejects a dry-run recovery before contacting PowerDNS', () => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /cannot run in dry-run mode/);
   assert.equal(result.stderr.includes('private-test-key'), false);
+});
+
+test('CLI rejects HE repair without recovery before contacting PowerDNS', () => {
+  const result = spawnSync(process.execPath, [path.join(__dirname, '../scripts/verify-pdns.js')], {
+    env: { ...process.env, PDNS_API_KEY: 'test', PDNS_API_URL: 'http://127.0.0.1:1', PDNS_ZONE: 'is-an.ai.', NOTIFY_ONLY: 'false', REPAIR_HE_NOTIFY: 'true', DRY_RUN: 'false' },
+    encoding: 'utf8', timeout: 3000,
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /repair requires NOTIFY_ONLY=true/);
 });
 
 test('CNAME names and equivalent IPv6 addresses are compared canonically', async t => {
