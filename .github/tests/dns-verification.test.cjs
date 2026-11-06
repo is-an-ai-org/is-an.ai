@@ -93,6 +93,52 @@ test('invalid notification metadata stops repair without writing or notifying', 
   assert.deepEqual(calls.put, []);
 });
 
+test('explicit serial advance only replaces the SOA serial and verifies the new snapshot', async t => {
+  const { client, calls, data } = fixture(t);
+  const records = structuredClone(data.rrsets);
+  const soa = { name: 'is-an.ai.', type: 'SOA', ttl: 7200,
+    records: [{ content: 'primary.example. hostmaster.example. 10 111 222 333 444', disabled: false }] };
+  const load = client.get;
+  client.get = async (url, options) => {
+    if (url.endsWith('/metadata/ALSO-NOTIFY')) return { data: { metadata: ['216.218.133.2'] } };
+    if (options.params.rrset_type === 'SOA') return { data: { serial: data.serial, rrsets: [soa] } };
+    return load();
+  };
+  const patches = [];
+  client.patch = async (...args) => {
+    patches.push(args);
+    data.serial = Number(args[1].rrsets[0].records[0].content.split(' ')[2]);
+  };
+  await verifyDns(client, 'is-an.ai', 'www.is-an.ai', 'advance-serial');
+  assert.deepEqual(patches, [['/api/v1/servers/localhost/zones/is-an.ai.', { rrsets: [{
+    name: 'is-an.ai.', type: 'SOA', ttl: 7200, changetype: 'REPLACE',
+    records: [{ content: 'primary.example. hostmaster.example. 11 111 222 333 444', disabled: false }],
+  }] }]]);
+  assert.equal(data.serial, 11);
+  assert.deepEqual(data.rrsets, records);
+  assert.deepEqual(calls.put, [['/api/v1/servers/localhost/zones/is-an.ai./notify']]);
+});
+
+test('an invalid or overflowing SOA cannot be advanced', async t => {
+  const { client, calls } = fixture(t);
+  const load = client.get;
+  let serial = 10;
+  let content = 'primary.example. hostmaster.example. 9 111 222 333 444';
+  client.get = async (url, options) => {
+    if (url.endsWith('/metadata/ALSO-NOTIFY')) return { data: { metadata: ['216.218.133.2'] } };
+    if (options.params.rrset_type === 'SOA') return { data: { serial, rrsets: [{ name: 'is-an.ai.', type: 'SOA', ttl: 3600, records: [{ content, disabled: false }] }] } };
+    return load();
+  };
+  let patches = 0;
+  client.patch = async () => { patches++; };
+  await assert.rejects(verifyDns(client, 'is-an.ai', 'www.is-an.ai', 'advance-serial'), /Cannot safely advance/);
+  serial = 0xffffffff;
+  content = 'primary.example. hostmaster.example. 4294967295 111 222 333 444';
+  await assert.rejects(verifyDns(client, 'is-an.ai', 'www.is-an.ai', 'advance-serial'), /Cannot safely advance/);
+  assert.equal(patches, 0);
+  assert.deepEqual(calls.put, []);
+});
+
 test('stale serials and missing answers fail after a bounded retry window', async t => {
   const { client, calls } = fixture(t, {
     serial: n => n === 2 ? 9 : 10,
@@ -156,7 +202,7 @@ test('CLI rejects HE repair without recovery before contacting PowerDNS', () => 
     encoding: 'utf8', timeout: 3000,
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /repair requires NOTIFY_ONLY=true/);
+  assert.match(result.stderr, /requires NOTIFY_ONLY=true/);
 });
 
 test('CNAME names and equivalent IPv6 addresses are compared canonically', async t => {

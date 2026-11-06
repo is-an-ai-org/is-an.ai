@@ -9,6 +9,7 @@ type RecordType = (typeof recordTypes)[number];
 interface RRSet {
   name: string;
   type: string;
+  ttl: number;
   records: { content: string; disabled: boolean }[];
 }
 interface Zone {
@@ -60,7 +61,7 @@ export async function verifyDns(
   client: AxiosInstance,
   zoneValue: string,
   probeValue: string,
-  recover: boolean | "repair-he-notify",
+  recover: boolean | "repair-he-notify" | "advance-serial",
 ): Promise<void> {
   const zone = hostname(zoneValue);
   const probe = hostname(probeValue);
@@ -102,7 +103,7 @@ export async function verifyDns(
     );
   };
   let expected = await load();
-  if (recover === "repair-he-notify") {
+  if (recover === "repair-he-notify" || recover === "advance-serial") {
     const path = `/api/v1/servers/localhost/zones/${encodeURIComponent(zone + ".")}/metadata/ALSO-NOTIFY`;
     const { data } = await client.get<{ metadata: string[] }>(path);
     if (
@@ -122,6 +123,48 @@ export async function verifyDns(
         throw new Error("PowerDNS did not persist the HE NOTIFY target");
     }
     console.log(`HE transfer collector ${collector} is in ALSO-NOTIFY.`);
+  }
+  if (recover === "advance-serial") {
+    const path = `/api/v1/servers/localhost/zones/${encodeURIComponent(zone + ".")}`;
+    const { data } = await client.get<Zone>(path, {
+      params: { rrset_name: zone + ".", rrset_type: "SOA" },
+    });
+    const soa = data.rrsets.find(
+      (r) => r.type === "SOA" && r.name.toLowerCase() === zone + ".",
+    );
+    const fields = soa?.records[0]?.content.trim().split(/\s+/);
+    if (
+      !soa ||
+      soa.records.length !== 1 ||
+      soa.records[0].disabled ||
+      !Number.isInteger(soa.ttl) ||
+      soa.ttl < 0 ||
+      !Number.isInteger(data.serial) ||
+      data.serial < 0 ||
+      data.serial >= 0xffffffff ||
+      !fields ||
+      fields.length !== 7 ||
+      Number(fields[2]) !== data.serial
+    )
+      throw new Error("Cannot safely advance the current SOA serial");
+    fields[2] = String(data.serial + 1);
+    await client.patch(path, {
+      rrsets: [
+        {
+          name: soa.name,
+          type: "SOA",
+          ttl: soa.ttl,
+          changetype: "REPLACE",
+          records: [{ content: fields.join(" "), disabled: false }],
+        },
+      ],
+    });
+    expected = await load();
+    if (expected.serial <= data.serial)
+      throw new Error("PowerDNS did not advance the SOA serial");
+    console.log(
+      `Advanced SOA serial ${data.serial} -> ${expected.serial}; other records unchanged.`,
+    );
   }
   if (recover) await notifySecondaries(client, zone + ".");
   let failures: string[] = [];
@@ -183,8 +226,11 @@ async function main(): Promise<void> {
     throw new Error("PDNS_API_KEY, PDNS_API_URL and PDNS_ZONE are required");
   const recover = process.env.NOTIFY_ONLY === "true";
   const repair = process.env.REPAIR_HE_NOTIFY === "true";
-  if (repair && !recover)
-    throw new Error("HE NOTIFY repair requires NOTIFY_ONLY=true");
+  const advance = process.env.ADVANCE_SERIAL === "true";
+  if ((repair || advance) && !recover)
+    throw new Error(
+      "HE NOTIFY repair/serial advance requires NOTIFY_ONLY=true",
+    );
   if (process.env.DRY_RUN === "true")
     throw new Error(
       "Public DNS recovery/verification cannot run in dry-run mode",
@@ -195,7 +241,12 @@ async function main(): Promise<void> {
     timeout: 30000,
   });
   const probe = process.env.DNS_PROBE_NAME || `www.${hostname(zone)}`;
-  await verifyDns(client, zone, probe, repair ? "repair-he-notify" : recover);
+  await verifyDns(
+    client,
+    zone,
+    probe,
+    advance ? "advance-serial" : repair ? "repair-he-notify" : recover,
+  );
 }
 
 if (require.main === module) {
