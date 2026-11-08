@@ -1,0 +1,13 @@
+{
+   "description": "vercel verification for sai",
+   "owner": {
+      "github_username": "ftdIgST_K_txCslw4h4Mq",
+      "email": "sgdev@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=sai.is-an.ai,92aef8889e0d6f3c2fea"
+      }
+   ]
+}
