@@ -1,0 +1,17 @@
+{
+   "description": "",
+   "owner": {
+      "github_username": "ftdIgST_K_txCslw4h4Mq",
+      "email": "sgdev@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "337bab4508be0526.vercel-dns-017.com"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=www.sai.is-an.ai,314e692d5d27405e3f76"
+      }
+   ]
+}
