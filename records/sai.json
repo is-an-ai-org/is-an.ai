@@ -8,6 +8,10 @@
       {
          "type": "A",
          "value": "216.198.79.1"
+      },
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=sai.is-an.ai,92aef8889e0d6f3c2fea"
       }
    ]
 }
