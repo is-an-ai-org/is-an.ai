@@ -1,0 +1,13 @@
+{
+   "description": "My AI company website",
+   "owner": {
+      "github_username": "iABvqbFyPLSeJHyHCXOCs",
+      "email": "LandenMartin-Dev@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "dentists-fast-impressive-law.trycloudflare.com"
+      }
+   ]
+}
