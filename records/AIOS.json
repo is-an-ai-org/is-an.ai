@@ -1,0 +1,13 @@
+{
+   "description": "AIOS",
+   "owner": {
+      "github_username": "irISXbCwJpj5akk_8tNcV",
+      "email": "Robyroy@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "custom-domains.chatgpt.site"
+      }
+   ]
+}
