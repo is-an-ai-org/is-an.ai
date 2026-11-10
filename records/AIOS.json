@@ -8,10 +8,6 @@
       {
          "type": "CNAME",
          "value": "custom-domains.chatgpt.site"
-      },
-      {
-         "type": "TXT",
-         "value": "openai-site-verification=f5iUJ30wEmpLYwIi7wzI6_5mgajwu_ZgDsGRdVjVAVU"
       }
    ]
 }
