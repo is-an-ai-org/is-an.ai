@@ -1,3 +1,4 @@
+import { execFileSync } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import https from "https";
@@ -50,6 +51,7 @@ interface RecordDefinition {
 }
 
 interface RecordFileContent {
+  suspended?: boolean;
   description?: string;
   owner: {
     github_username?: string;
@@ -234,6 +236,9 @@ function validateFileContent(content: RecordFileContent, filePath: string): stri
   const errors: string[] = [];
   const subdomain = getSubdomainFromFilename(filePath);
   const isVendor = isVendorSubdomain(subdomain);
+  if (content.suspended !== undefined) {
+    errors.push("Only moderators can set a suspension");
+  }
 
   // Validate subdomain name
   const nameError = validateSubdomainName(subdomain);
@@ -287,6 +292,7 @@ function validateFileContent(content: RecordFileContent, filePath: string): stri
 async function loadJsonFile(filePath: string): Promise<RecordFileContent | null> {
   try {
     const fullPath = path.join(WORKSPACE_PATH, filePath);
+    if (!(await fs.lstat(fullPath)).isFile()) return null;
     const content = await fs.readFile(fullPath, "utf-8");
     return JSON.parse(content) as RecordFileContent;
   } catch (e) {
@@ -307,11 +313,9 @@ type BaseFileResult =
   | { status: "error"; message: string };
 
 async function loadBaseFile(filePath: string): Promise<BaseFileResult> {
-  const { execSync } = await import("child_process");
-
   let raw: string;
   try {
-    raw = execSync(`git show HEAD:${filePath}`, {
+    raw = execFileSync("git", ["show", `HEAD:${filePath}`], {
       encoding: "utf-8",
       cwd: WORKSPACE_PATH,
       stdio: ["ignore", "pipe", "pipe"],
@@ -354,7 +358,22 @@ async function validatePR(): Promise<void> {
   }
 
   // Validate ADDED files
+  const reservedPaths = new Set<string>();
+  if (ADDED_FILES.length > 0) {
+    const basePaths = execFileSync("git", ["ls-tree", "-r", "-z", "--name-only", "HEAD", "--", "records/"], {
+      cwd: WORKSPACE_PATH,
+      encoding: "utf-8",
+    });
+    for (const file of basePaths.split("\0")) reservedPaths.add(file.toLowerCase());
+  }
   for (const file of ADDED_FILES) {
+    const normalized = file.toLowerCase();
+    if (reservedPaths.has(normalized)) {
+      errors.push({ file, message: "A record with this name already exists" });
+      continue;
+    }
+    reservedPaths.add(normalized);
+
     const content = await loadJsonFile(file);
     if (!content) {
       errors.push({ file, message: "Failed to parse JSON" });
@@ -416,6 +435,10 @@ async function validatePR(): Promise<void> {
       continue;
     }
     const baseContent = base.content;
+    if (baseContent.suspended === true) {
+      errors.push({ file, message: "Suspended records can only be changed by moderators" });
+      continue;
+    }
 
     if (!skipEmailCheck && baseContent?.owner?.email) {
       // Prevent changing owner.email (domain theft prevention)
@@ -448,8 +471,12 @@ async function validatePR(): Promise<void> {
 
   // Validate DELETED files
   for (const file of DELETED_FILES) {
+    const base = await loadBaseFile(file);
+    if (base.status === "ok" && base.content.suspended === true) {
+      errors.push({ file, message: "Suspended records can only be removed by moderators" });
+      continue;
+    }
     if (!skipEmailCheck) {
-      const base = await loadBaseFile(file);
       if (base.status === "error") {
         errors.push({
           file,

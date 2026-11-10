@@ -270,7 +270,7 @@ async function getCurrentSoaSerial(): Promise<number> {
 
 // --- File Loading ---
 
-async function loadRecordFile(filePath: string): Promise<RecordSignature[]> {
+async function loadRecordFile(filePath: string): Promise<RecordSignature[] | undefined> {
   try {
     const fileContent = await fs.readFile(filePath, "utf-8");
     const data: any = JSON.parse(fileContent);
@@ -282,8 +282,10 @@ async function loadRecordFile(filePath: string): Promise<RecordSignature[]> {
       !Array.isArray(data.record)
     ) {
       console.warn(`Skipping invalid structure: ${filePath}`);
-      return [];
+      return undefined;
     }
+
+    if (data.suspended === true) return [];
 
     const subdomain = getSubdomainFromPath(filePath);
 
@@ -318,10 +320,10 @@ async function loadRecordFile(filePath: string): Promise<RecordSignature[]> {
         });
       }
     }
-    return signatures;
+    return signatures.length ? signatures : undefined;
   } catch (error) {
     console.error(`Error loading file ${filePath}: ${error}`);
-    return [];
+    return undefined;
   }
 }
 
@@ -369,7 +371,7 @@ async function processChanges(): Promise<void> {
     if (processedSubdomains.has(subdomain)) continue;
 
     const newRecords = await loadRecordFile(filePath);
-    if (newRecords.length === 0) continue;
+    if (!newRecords) continue;
 
     const fqdn = subdomainToFqdn(subdomain);
     console.log(`Processing Update for: ${fqdn}`);
@@ -590,6 +592,7 @@ async function loadVendorRecordsFromDisk(
   const merged: PdnsApiPatchRecord[] = [];
   for (const file of siblings) {
     const records = await loadRecordFile(path.join(recordsDir, file));
+    if (!records) continue;
     for (const r of records) {
       if (r.type.toUpperCase() !== "TXT") continue;
       const content = normalizeContent("TXT", r.content);
