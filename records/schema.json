@@ -29,6 +29,7 @@
     "record": {
       "description": "DNS record configuration as an array of record objects.",
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "object",
         "properties": {

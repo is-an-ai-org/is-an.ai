@@ -16,6 +16,12 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
   for (const [label, initial, records, expected] of [
     ['add TXT to CNAME', [rrset('CNAME', target + '.')], [cname, txt], ['ALIAS', 'TXT']],
     ['create mixed records', [], [cname, txt], ['ALIAS', 'TXT']],
+    ['deduplicate TXT and preserve distinct values', [], [txt, txt, { type: 'TXT', value: '"1120448"' }, { type: 'TXT', value: 'other' }], ['TXT']],
+    ['deduplicate MX and preserve distinct priorities', [], [
+      { type: 'MX', value: { priority: 10, exchange: 'mail.example.com' } },
+      { type: 'MX', value: { priority: 10, exchange: 'mail.example.com.' } },
+      { type: 'MX', value: { priority: 20, exchange: 'mail.example.com' } },
+    ], ['MX']],
     ['remove TXT from ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname], ['CNAME']],
     ['ignore out-of-zone records', [
       rrset('CNAME', target + '.'),
@@ -55,6 +61,11 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
             const key = r.name + r.type;
             if (r.changetype === 'DELETE') next.delete(key);
             else {
+              if (new Set(r.records.map(record => record.content)).size !== r.records.length) {
+                res.statusCode = 422;
+                res.end(JSON.stringify({ error: 'Duplicate record in RRset' }));
+                return;
+              }
               const conflict = [...next.values()].some(old => old.name === r.name && old.type !== r.type && (old.type === 'CNAME' || r.type === 'CNAME'));
               if (conflict) {
                 res.statusCode = 422;
@@ -84,6 +95,12 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         });
         await run();
         assert.deepEqual(state.filter(r => r.name === name).map(r => r.type).sort(), expected.sort());
+        if (label.startsWith('deduplicate')) {
+          const contents = state.find(r => r.name === name).records.map(r => r.content).sort();
+          assert.deepEqual(contents, label.includes('TXT')
+            ? ['"1120448"', '"other"']
+            : ['10 mail.example.com.', '20 mail.example.com.']);
+        }
         if (label === 'ignore out-of-zone records') {
           for (const external of initial.slice(1)) {
             assert.deepEqual(state.find(r => r.name === external.name), external);

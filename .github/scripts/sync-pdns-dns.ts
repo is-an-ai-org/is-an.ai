@@ -727,19 +727,20 @@ async function syncDNSRecords(): Promise<void> {
         repoRecordsForRrset = [repoRecordsForRrset[0]];
       }
 
+      const contents = repoRecordsForRrset.map((r) => {
+        let content = normalizeContent(r.type, r.content);
+        // MX: priority must be part of content, not a separate field
+        if (r.type === "MX" && r.priority !== undefined) {
+          content = `${r.priority} ${content}`;
+        }
+        return content;
+      });
       patchPayload.push({
         name: fqdn,
         type,
         ttl: DEFAULT_TTL,
         changetype: "REPLACE",
-        records: repoRecordsForRrset.map((r) => {
-          let content = normalizeContent(r.type, r.content);
-          // MX: priority must be part of content, not a separate field
-          if (r.type === "MX" && r.priority !== undefined) {
-            content = `${r.priority} ${content}`;
-          }
-          return { content, disabled: false };
-        }),
+        records: [...new Set(contents)].map((content) => ({ content, disabled: false })),
       });
     } else {
       // --- DELETE logic ---
