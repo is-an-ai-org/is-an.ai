@@ -8,6 +8,10 @@
       {
          "type": "TXT",
          "value": "kata-verify=07f06d60c4fb4127b974bddb36c89426"
+      },
+      {
+         "type": "TXT",
+         "value": "kata-verify=07f06d60c4fb4127b974bddb36c89426"
       }
    ]
 }
