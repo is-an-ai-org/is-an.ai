@@ -1,0 +1,13 @@
+{
+   "description": "Official Site",
+   "owner": {
+      "github_username": "N0PX0XOlpMo5LqH4WL3Rp",
+      "email": "nwsd-network@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "kata-verify=07f06d60c4fb4127b974bddb36c89426"
+      }
+   ]
+}
