@@ -1,0 +1,13 @@
+{
+   "description": "The Official Site",
+   "owner": {
+      "github_username": "N0PX0XOlpMo5LqH4WL3Rp",
+      "email": "nwsd-network@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "radiant-quick-site-forge.base44.app"
+      }
+   ]
+}
