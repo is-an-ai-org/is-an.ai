@@ -424,18 +424,19 @@ async function processChanges(): Promise<void> {
       }
 
       newTypes.add(finalType);
+      const contents = finalRecords.map((r) => {
+        let content = normalizeContent(r.type, r.content);
+        if (r.type === "MX" && r.priority !== undefined) {
+          content = `${r.priority} ${content}`;
+        }
+        return content;
+      });
       patchPayload.push({
         name: fqdn,
         type: finalType,
         ttl: DEFAULT_TTL,
         changetype: "REPLACE",
-        records: finalRecords.map((r) => {
-          let content = normalizeContent(r.type, r.content);
-          if (r.type === "MX" && r.priority !== undefined) {
-            content = `${r.priority} ${content}`;
-          }
-          return { content, disabled: false };
-        }),
+        records: [...new Set(contents)].map((content) => ({ content, disabled: false })),
       });
     }
 

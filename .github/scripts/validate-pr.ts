@@ -272,11 +272,22 @@ function validateFileContent(content: RecordFileContent, filePath: string): stri
     errors.push("Maximum 10 records allowed");
   }
 
+  const seen = new Set<string>();
   for (let i = 0; i < content.record.length; i++) {
     const recordError = validateRecord(content.record[i], isVendor);
     if (recordError) {
       errors.push(`Record ${i + 1}: ${recordError}`);
+      continue;
     }
+    const record = content.record[i];
+    const value = typeof record.value === "string"
+      ? record.value
+      : [record.value.priority, record.value.exchange];
+    const key = JSON.stringify([record.type.toUpperCase(), value]);
+    if (seen.has(key)) {
+      errors.push(`Record ${i + 1}: Duplicate DNS record`);
+    }
+    seen.add(key);
   }
 
   return errors;
