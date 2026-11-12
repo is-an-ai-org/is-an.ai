@@ -1,0 +1,13 @@
+{
+   "description": "An AI company!",
+   "owner": {
+      "github_username": "iABvqbFyPLSeJHyHCXOCs",
+      "email": "LandenMartin-Dev@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "192.168.12.140:5000"
+      }
+   ]
+}
