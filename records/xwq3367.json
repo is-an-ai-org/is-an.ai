@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "CNAME",
-         "value": "ltw.frp.one"
+         "type": "A",
+         "value": "116.162.205.35"
       }
    ]
 }
