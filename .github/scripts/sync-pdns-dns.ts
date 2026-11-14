@@ -42,6 +42,7 @@ interface RecordDefinition {
 }
 
 interface RecordFileContent {
+  suspended?: boolean;
   description?: string;
   owner: {
     github_username?: string;
@@ -463,6 +464,7 @@ async function loadAllRepositoryRecords(): Promise<
         }
 
         const fileData = data as RecordFileContent;
+        if (fileData.suspended === true) continue;
         const signatures: RecordSignature[] = [];
 
         for (const recordDef of fileData.record) {
