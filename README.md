@@ -69,6 +69,12 @@ The check retries up to 60 times at five-second intervals, querying each nameser
 GitHub schedules can be delayed. Failed scheduled/full-sync checks create one open `sync-failure` issue; close it after resolving the incident to allow a new alert.
 NOTIFY asks the configured secondaries to refresh; it cannot force a provider to complete a transfer.
 
+If the HE transfer collector is missing from the notification targets, also set `repair_he_notify=true` in that recovery run.
+This adds `216.218.133.2` (`slave.dns.he.net`) to the zone's `ALSO-NOTIFY` metadata while preserving existing targets, records, and the SOA serial.
+If notifications alone do not refresh stale HE nodes, explicitly set `advance_serial=true` with `notify_only=true` and `dry_run=false`.
+This also ensures the HE collector is notified, increases only the current SOA serial, and preserves its other fields and every other record. Each such run advances the serial once; ordinary notification-only recovery does not.
+Use **Test PowerDNS Connection** with `test_type=replication` to inspect the live notification settings without printing API/TSIG keys or DNS records.
+
 ## Vendor Subdomains
 
 For domain verification (Vercel, Discord, etc.), use the `_{vendor}.{subdomain}` format:
