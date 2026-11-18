@@ -1,0 +1,13 @@
+{
+   "description": "now",
+   "owner": {
+      "github_username": "N0PX0XOlpMo5LqH4WL3Rp",
+      "email": "nwsd-network@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "pitter-verify=8fd4eb42c1e10fecd37d4a71d8d31a4e35527e10af74ed02"
+      }
+   ]
+}
