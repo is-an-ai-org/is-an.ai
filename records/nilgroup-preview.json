@@ -1,0 +1,13 @@
+{
+   "description": "NIL GROUP website preview and testingNIL GROUP website preview and testing",
+   "owner": {
+      "github_username": "dUNviQ_47mQQYAkunZTA4",
+      "email": "Babak @noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "nilgroup-web-preview.pages.dev"
+      }
+   ]
+}
