@@ -1,0 +1,13 @@
+{
+   "description": "Official AI and technology platform of NIL GROUP",
+   "owner": {
+      "github_username": "dUNviQ_47mQQYAkunZTA4",
+      "email": "Babak @noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "192.168.1.1nilgroup-web.pages.dev"
+      }
+   ]
+}
