@@ -1,0 +1,13 @@
+{
+   "description": "An AI by AramCZ",
+   "owner": {
+      "github_username": "et2jc46_hXqKHup6-CeHL",
+      "email": "AramCZ@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "aramczdev.github.io"
+      }
+   ]
+}
