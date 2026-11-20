@@ -1,0 +1,21 @@
+{
+  "description": "CRag AI outreach and app subdomain",
+  "owner": {
+    "email": "prathampatil7798@gmail.com"
+  },
+  "record": [
+    {
+      "type": "A",
+      "value": "76.76.21.21"
+    },
+    {
+      "type": "TXT",
+      "name": "_vercel",
+      "value": "vc-domain-verify=trycrag.is-an.ai,1894c718f1f0312ce581"
+    },
+    {
+      "type": "TXT",
+      "value": "zoho-verification=zb57734390.zmverify.zoho.in"
+    }
+  ]
+}
