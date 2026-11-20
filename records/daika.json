@@ -1,0 +1,13 @@
+{
+   "description": "Personal landing page and link hub for daika",
+   "owner": {
+      "github_username": "8vn3XQX5Nh9JkwMppNiCV",
+      "email": "TanK@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "tankotan.github.io"
+      }
+   ]
+}
