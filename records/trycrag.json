@@ -3,19 +3,39 @@
   "owner": {
     "email": "prathampatil7798@gmail.com"
   },
-  "record": [
+ "record": [
     {
       "type": "A",
       "value": "76.76.21.21"
     },
     {
-      "type": "TXT",
-      "name": "_vercel",
-      "value": "vc-domain-verify=trycrag.is-an.ai,1894c718f1f0312ce581"
+      "type": "MX",
+      "value": {
+        "priority": 10,
+        "exchange": "mx.zoho.in"
+      }
+    },
+    {
+      "type": "MX",
+      "value": {
+        "priority": 20,
+        "exchange": "mx2.zoho.in"
+      }
+    },
+    {
+      "type": "MX",
+      "value": {
+        "priority": 50,
+        "exchange": "mx3.zoho.in"
+      }
     },
     {
       "type": "TXT",
       "value": "zoho-verification=zb57734390.zmverify.zoho.in"
+    },
+    {
+      "type": "TXT",
+      "value": "v=spf1 include:zoho.in ~all"
     }
   ]
 }
