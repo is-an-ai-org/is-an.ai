@@ -3,10 +3,25 @@
   "owner": {
     "email": "prathampatil7798@gmail.com"
   },
-  "record": [
+ "record": [
     {
       "type": "A",
       "value": "76.76.21.21"
+    },
+    {
+      "type": "MX",
+      "exchange": "mx.zoho.in",
+      "priority": 10
+    },
+    {
+      "type": "MX",
+      "exchange": "mx2.zoho.in",
+      "priority": 20
+    },
+    {
+      "type": "MX",
+      "exchange": "mx3.zoho.in",
+      "priority": 50
     },
     {
       "type": "TXT",
@@ -16,6 +31,20 @@
     {
       "type": "TXT",
       "value": "zoho-verification=zb57734390.zmverify.zoho.in"
+    },
+    {
+      "type": "TXT",
+      "value": "v=spf1 include:zoho.in ~all"
+    },
+    {
+      "type": "TXT",
+      "name": "zmail._domainkey",
+      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC2M7i46J60zNATbbTToRs/ZUdTuNr6HXyQKAzph1p6ZgGIOZ3t94L5KUNtvf4TDh7Zf0yEY9T+Zua1Wl/pdr6jy2VO2RgTfkc/7YTzkW39+3UF0ynFf03L7G7ABmhCdvDh2wLik2HtGR4fcfAmHtMfszXVA7A/FnEuOORrOwHSOwIDAQAB"
+    },
+    {
+      "type": "TXT",
+      "name": "_dmarc",
+      "value": "v=DMARC1; p=none;"
     }
   ]
 }
