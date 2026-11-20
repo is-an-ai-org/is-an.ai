@@ -1,0 +1,13 @@
+{
+   "description": "Proyecto Fuego: aplicación de historias y personajes con inteligencia artificial.",
+   "owner": {
+      "github_username": "95h5agxxA6aDJ3dlQCYKp",
+      "email": "configzlz07-png@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "custom-domains.chatgpt.site"
+      }
+   ]
+}
