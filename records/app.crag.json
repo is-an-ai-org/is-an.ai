@@ -1,0 +1,13 @@
+{
+   "description": "Crag webapp",
+   "owner": {
+      "github_username": "fwZ3l4Bm7rh9T6tBH7G98",
+      "email": "Prathamesh Patil@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "d6154da6f6aeb2b0.vercel-dns-017.com"
+      }
+   ]
+}
