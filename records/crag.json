@@ -1,0 +1,21 @@
+{
+  "description": "CRag AI - AI project workspace and hybrid RAG platform",
+  "owner": {
+    "email": "prathampatil7798@gmail.com"
+  },
+  "record": [
+    {
+      "type": "CNAME",
+      "value": "e23fca34538f8c9f.vercel-dns-017.com"
+    },
+    {
+      "type": "TXT",
+      "name": "_vercel",
+      "value": "vc-domain-verify=crag.is-an.ai,0989e59830174a91bbb3"
+    },
+    {
+      "type": "TXT",
+      "value": "zoho-verification=zb49463421.zmverify.zoho.in"
+    }
+  ]
+}
