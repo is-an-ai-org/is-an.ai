@@ -5,8 +5,8 @@
   },
  "record": [
     {
-      "type": "A",
-      "value": "76.76.21.21"
+      "type": "CNAME",
+      "value": "crag.pages.dev"
     },
     {
       "type": "MX",
