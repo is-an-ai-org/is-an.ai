@@ -3,10 +3,10 @@
   "owner": {
     "email": "prathampatil7798@gmail.com"
   },
- "record": [
+  "record": [
     {
       "type": "CNAME",
-      "value": "crag.pages.dev"
+      "value": "e23fca34538f8c9f.vercel-dns-017.com"
     },
     {
       "type": "MX",
