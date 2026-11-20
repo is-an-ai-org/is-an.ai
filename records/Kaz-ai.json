@@ -1,0 +1,13 @@
+{
+   "description": "Kaz AI — казахстанский сайт искусственного интеллекта для общения, программирования, перевода и работа с изображением.",
+   "owner": {
+      "github_username": "p5kpKJXVTfg47LOxug6UV",
+      "email": "BauRP@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "kaz-ai.tengrize.workers.dev"
+      }
+   ]
+}
