@@ -10,26 +10,24 @@
     },
     {
       "type": "MX",
-      "value": "mx.zoho.in",
-      "exchange": "mx.zoho.in",
-      "priority": 10
+      "value": {
+        "priority": 10,
+        "exchange": "mx.zoho.in"
+      }
     },
     {
       "type": "MX",
-      "value": "mx2.zoho.in",
-      "exchange": "mx2.zoho.in",
-      "priority": 20
+      "value": {
+        "priority": 20,
+        "exchange": "mx2.zoho.in"
+      }
     },
     {
       "type": "MX",
-      "value": "mx3.zoho.in",
-      "exchange": "mx3.zoho.in",
-      "priority": 50
-    },
-    {
-      "type": "TXT",
-      "name": "_vercel",
-      "value": "vc-domain-verify=crag.is-an.ai,0989e59830174a91bbb3"
+      "value": {
+        "priority": 50,
+        "exchange": "mx3.zoho.in"
+      }
     },
     {
       "type": "TXT",
@@ -38,16 +36,6 @@
     {
       "type": "TXT",
       "value": "v=spf1 include:zoho.in ~all"
-    },
-    {
-      "type": "TXT",
-      "name": "zmail._domainkey",
-      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCVOspWszTjR7PwHTQZ+zckf/4GPrgVocvXbOD7lSzyXuDGpvVvQVwQFJLzpsK+h1JQR/NSCL5p6dPPZQffyBKpRuIS85UryEJZnOm2RjgzNutkpyetVCjBzBU9nNw5y4qvas6bCzyTjXo6W+M41+49lrzIoVv9sSnhyg8npXeQQQIDAQAB"
-    },
-    {
-      "type": "TXT",
-      "name": "_dmarc",
-      "value": "v=DMARC1; p=none;"
     }
   ]
 }
