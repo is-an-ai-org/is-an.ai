@@ -37,6 +37,16 @@ const IPV6_REGEX = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:
 const DOMAIN_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 const VENDOR_PATTERN = /^_([a-z0-9]+)\.[a-z0-9][a-z0-9.-]*$/;
 
+// 누구나 경로 아래에 파일을 올릴 수 있는 공용 호스트. 여기를 CNAME 으로 가리키면
+// 레코드 소유자와 무관하게 아무 GitHub 사용자의 업로드가 *.is-an.ai 주소로 보인다
+// (Netcraft 93584398: 2.is-an.ai -> github.com 릴리스의 악성 MSI).
+// 정당한 설정은 항상 사용자별 호스트(<user>.github.io 등)를 가리키므로 막아도 잃는 게 없다.
+const SHARED_HOST_TARGETS = [
+  "github.com", "www.github.com", "gist.github.com", "codeload.github.com",
+  "raw.githubusercontent.com", "objects.githubusercontent.com", "githubusercontent.com",
+  "github.io", "gitlab.com", "www.gitlab.com", "bitbucket.org",
+];
+
 // --- Types ---
 
 interface MxRecordValue {
@@ -221,6 +231,9 @@ function validateRecord(record: RecordDefinition, isVendor: boolean): string | n
       break;
     case "CNAME":
       if (!DOMAIN_REGEX.test(record.value)) return "CNAME record must be a valid domain";
+      if (SHARED_HOST_TARGETS.includes(record.value.toLowerCase().replace(/\.$/, ""))) {
+        return `CNAME cannot point to shared host ${record.value} — use your own host (e.g. <user>.github.io)`;
+      }
       break;
     case "TXT":
       if (record.value.length > 255) return "TXT record value cannot exceed 255 characters";
