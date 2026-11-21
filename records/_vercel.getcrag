@@ -1,1 +1,12 @@
-
+{
+  "description": "Vercel verification for crag",
+  "owner": {
+    "email": "prathampatil7798@gmail.com"
+  },
+  "record": [
+    {
+      "type": "TXT",
+      "value": "vc-domain-verify=getcrag.is-an.ai,e80fd9476045d01d4981"
+    }
+  ]
+}
