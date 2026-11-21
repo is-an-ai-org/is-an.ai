@@ -33,6 +33,15 @@
     {
       "type": "TXT",
       "value": "v=spf1 include:zoho.in ~all"
+    },
+    {
+      "type": "TXT",
+      "name": "zmail._domainkey",
+      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCMS8LjXLExGtA6GOmFIOYEiWS8HaPiomyFlujK/IM/QboW1BNquVyNY/mFan0sgstbXfaE8IR2XZ1248/TbfoZ4bvzE3x+goP0iHrCEqaRxMira5rmNeWIFV9/QW/WYbkvWMMS2M0hFhQiyIiJLx41Pn8QplBi3VfyQXegg1yPawIDAQAB"
+    },
+    {
+      "type": "CNAME",
+      "value": "e23fca34538f8c9f.vercel-dns-017.com"
     }
   ]
 }
