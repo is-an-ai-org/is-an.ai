@@ -1,0 +1,13 @@
+{
+   "description": "vercel verification for app.crag",
+   "owner": {
+      "github_username": "fwZ3l4Bm7rh9T6tBH7G98",
+      "email": "Prathamesh Patil@noreply.com"
+   },
+   "record": [
+      {
+         "type": "TXT",
+         "value": "vc-domain-verify=app.crag.is-an.ai,2acb63dea6272e04d81d"
+      }
+   ]
+}
