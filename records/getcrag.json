@@ -11,15 +11,24 @@
     },
     {
       "type": "MX",
-      "value": "10 mx.zoho.in"
+      "value": {
+        "priority": 10,
+        "exchange": "mx.zoho.in"
+      }
     },
     {
       "type": "MX",
-      "value": "20 mx2.zoho.in"
+      "value": {
+        "priority": 20,
+        "exchange": "mx2.zoho.in"
+      }
     },
     {
       "type": "MX",
-      "value": "50 mx3.zoho.in"
+      "value": {
+        "priority": 50,
+        "exchange": "mx3.zoho.in"
+      }
     },
     {
       "type": "TXT",
