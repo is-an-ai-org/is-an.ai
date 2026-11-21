@@ -1,1 +1,12 @@
-
+{
+  "description": "CRag AI - AI project workspace and hybrid RAG platform",
+  "owner": {
+    "email": "prathampatil7798@gmail.com"
+  },
+  "record": [
+    {
+      "type": "TXT",
+      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCVOspWszTjR7PwHTQZ+zckf/4GPrgVocvXbOD7lSzyXuDGpvVvQVwQFJLzpsK+h1JQR/NSCL5p6dPPZQffyBKpRuIS85UryEJZnOm2RjgzNutkpyetVCjBzBU9nNw5y4qvas6bCzyTjXo6W+M41+49lrzIoVv9sSnhyg8npXeQQQIDAQAB"
+    }
+  ]
+}
