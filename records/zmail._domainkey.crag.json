@@ -6,7 +6,7 @@
   "record": [
     {
       "type": "TXT",
-      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCVOspWszTjR7PwHTQZ+zckf/4GPrgVocvXbOD7lSzyXuDGpvVvQVwQFJLzpsK+h1JQR/NSCL5p6dPPZQffyBKpRuIS85UryEJZnOm2RjgzNutkpyetVCjBzBU9nNw5y4qvas6bCzyTjXo6W+M41+49lrzIoVv9sSnhyg8npXeQQQIDAQAB"
+      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCM0x+VOtkaiQcxWtFiOzacSlclGehjyJTht1LuaJx5AcwJdo9WCUwnE0x5yR57xpeMIgxAyxtOuCoCUwXB0oJCWWX/cuEv2XqFAR7PZLzp05GFvsls/azvhj0HY7kkJtmrkL5tj/tnOzkKktPRY3H7gHYF7l5c3MicVIlfFPihuwIDAQAB"
     }
   ]
 }
