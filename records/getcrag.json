@@ -33,10 +33,6 @@
     {
       "type": "TXT",
       "value": "v=spf1 include:zoho.in ~all"
-    },
-    {
-      "type": "URL",
-      "value": "https://crag.is-an.ai"
     }
   ]
 }
