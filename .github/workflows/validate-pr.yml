@@ -31,6 +31,25 @@ jobs:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
 
+      - name: Check PR author moderation status
+        env:
+          PR_AUTHOR_ID: ${{ github.event.pull_request.user.id }}
+          PR_MODERATION_KEY: ${{ secrets.PR_MODERATION_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$PR_MODERATION_KEY" || ! "$PR_AUTHOR_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Unable to check PR author moderation status."
+            exit 1
+          fi
+          status=$(curl --silent --show-error --max-time 10 --output /dev/null --write-out '%{http_code}' \
+            -H "X-Admin-Key: $PR_MODERATION_KEY" \
+            "https://api.is-an.ai/admin/github-users/$PR_AUTHOR_ID/ban")
+          case "$status" in
+            204) ;;
+            403) echo "This account is banned from is-an.ai."; exit 1 ;;
+            *) echo "Moderation status check failed (HTTP $status)."; exit 1 ;;
+          esac
+
       # Fetch PR head to diff record files only
       - name: Fetch PR head
         env:
@@ -44,7 +63,12 @@ jobs:
       - name: Reject PRs with non-record file changes
         run: |
           BASE_SHA=$(git merge-base HEAD origin/pr-head)
-          NON_RECORD_FILES=$(git diff --name-only $BASE_SHA origin/pr-head | grep -v '^records/.*\.json$' || true)
+          NON_RECORD_FILES=$(git diff --no-renames --name-only "$BASE_SHA" origin/pr-head | grep -E -v '^records/[^/]+\.json$' || true)
+          TYPE_CHANGES=$(git diff --no-renames --name-only --diff-filter=T "$BASE_SHA" origin/pr-head)
+          if [ -n "$TYPE_CHANGES" ] || ! git diff --quiet "$BASE_SHA" origin/pr-head -- records/schema.json; then
+            echo "Record file type and schema changes require a maintainer."
+            exit 1
+          fi
           if [ -n "$NON_RECORD_FILES" ]; then
             echo "❌ PR contains changes outside records/*.json:"
             echo "$NON_RECORD_FILES"
@@ -63,7 +87,7 @@ jobs:
           # 든 파일명이 여러 개로 쪼개진다(그런 파일이 실제로 있다).
           emit() { # $1=output name, $2=diff-filter
             local name="$1" filter="$2" files
-            files=$(git diff --name-only --diff-filter="$filter" "$BASE_SHA" origin/pr-head -- 'records/**.json' | grep -v 'schema\.json$' || true)
+            files=$(git diff --no-renames --name-only --diff-filter="$filter" "$BASE_SHA" origin/pr-head -- 'records/**.json' | grep -v '^records/schema\.json$' || true)
             echo "--- $name ---"
             echo "${files:-(none)}"
             {
@@ -83,32 +107,6 @@ jobs:
             echo "$COMMIT_EMAILS"
             echo "__EOF_EMAILS__"
           } >> "$GITHUB_OUTPUT"
-
-      # 같은 서브도메인을 주장하는 PR 두 건이 둘 다 통과해 둘 다 auto-merge 되던 문제.
-      # 전체 스캔 없이 base 트리에 이미 있는지만 확인한다(파일당 O(1)).
-      # 여기서 못 잡으면 24시간 뒤 nightly full sync 에서야 드러난다.
-      - name: Reject records that already exist on base
-        env:
-          ADDED: ${{ steps.changes.outputs.added }}
-        run: |
-          set -euo pipefail
-          CONFLICTS=0
-          # IFS= + read -r: 파일명에 든 (유니코드) 공백으로 쪼개지지 않게 한다
-          while IFS= read -r f; do
-            [ -n "$f" ] || continue
-            if git cat-file -e "HEAD:$f" 2>/dev/null; then
-              if [ "$CONFLICTS" -eq 0 ]; then
-                echo "❌ 이미 등록된 서브도메인입니다:"
-              fi
-              echo "  - $f"
-              CONFLICTS=$((CONFLICTS + 1))
-            fi
-          done <<< "$ADDED"
-          if [ "$CONFLICTS" -gt 0 ]; then
-            echo "다른 이름을 사용하거나, 본인 소유라면 새로 추가하지 말고 해당 파일을 수정하세요."
-            exit 1
-          fi
-          echo "✓ 중복 서브도메인 없음"
 
       # Checkout only record files from PR (untrusted data, not scripts)
       - name: Checkout PR record files

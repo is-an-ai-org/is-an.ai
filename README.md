@@ -91,10 +91,10 @@ Report abuse by opening an issue in this repository.
 
 ### If your subdomain stopped resolving
 
-We disable subdomains we believe are being used for phishing, brand impersonation,
-malware distribution, or copyright-infringing streaming. Disabled records are moved
-to [`disabled/`](./disabled) — **they are not deleted**, and restoring one is a single
-file move.
+We can suspend subdomains we believe are being used for phishing, brand impersonation,
+malware distribution, or copyright-infringing streaming. A moderator sets the
+suspension in the domain record. DNS comes back when a moderator clears it.
+Previously disabled records remain archived in [`disabled/`](./disabled).
 
 **We may be wrong.** If yours was disabled and you think that is a mistake, open an
 issue and say so. We will restore it. You do not have to explain what your site is

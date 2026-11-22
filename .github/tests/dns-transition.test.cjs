@@ -13,7 +13,7 @@ const txt = { type: 'TXT', value: '1120448' };
 const rrset = (type, content) => ({ name, type, ttl: 300, records: [{ content, disabled: false }] });
 
 for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
-  for (const [label, initial, records, expected] of [
+  for (const [label, initial, records, expected, suspended] of [
     ['add TXT to CNAME', [rrset('CNAME', target + '.')], [cname, txt], ['ALIAS', 'TXT']],
     ['create mixed records', [], [cname, txt], ['ALIAS', 'TXT']],
     ['deduplicate TXT and preserve distinct values', [], [txt, txt, { type: 'TXT', value: '"1120448"' }, { type: 'TXT', value: 'other' }], ['TXT']],
@@ -31,6 +31,7 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
     ], [cname], ['CNAME']],
     ['keep existing ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname, txt], ['ALIAS', 'TXT']],
     ['replace CNAME with IP', [rrset('CNAME', target + '.')], [cname, { type: 'A', value: '192.0.2.1' }], ['A']],
+    ['suspend and restore a record', [rrset('CNAME', target + '.')], [cname], [], true],
   ]) {
     test(`${script}: ${label}`, async () => {
       const workspace = await mkdtemp(path.join(tmpdir(), 'dns-transition-'));
@@ -72,7 +73,8 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
                 res.end(JSON.stringify({ error: 'Conflicts with pre-existing RRset' }));
                 return;
               }
-              next.set(key, r);
+              const { changetype, ...recordSet } = r;
+              next.set(key, recordSet);
             }
           }
           state = [...next.values()];
@@ -81,7 +83,8 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
       });
       try {
         await mkdir(path.join(workspace, 'records'));
-        await writeFile(path.join(workspace, 'records/Tree-Vision.json'), JSON.stringify({ record: records }));
+        const recordFile = path.join(workspace, 'records/Tree-Vision.json');
+        await writeFile(recordFile, JSON.stringify({ record: records, suspended }));
         await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
         const run = extraEnv => new Promise((resolve, reject) => {
           const child = spawn(process.execPath, [path.join(__dirname, `../scripts/${script}.js`)], {
@@ -121,6 +124,11 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         if (label === 'create mixed records') {
           failNotify = true;
           await assert.rejects(run(), /PowerDNS NOTIFY failed/);
+        }
+        if (suspended) {
+          await writeFile(recordFile, JSON.stringify({ record: records }));
+          await run();
+          assert.deepEqual(state.filter(r => r.name === name), [rrset('CNAME', target + '.')]);
         }
       } finally {
         await new Promise(resolve => server.close(resolve));
