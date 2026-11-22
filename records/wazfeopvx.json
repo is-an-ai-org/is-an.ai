@@ -8,10 +8,6 @@
       {
          "type": "CNAME",
          "value": "1-7xhttp.pages.dev"
-      },
-      {
-         "type": "CNAME",
-         "value": "1-7vless.pages.dev"
       }
    ]
 }
