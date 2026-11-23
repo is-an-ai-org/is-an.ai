@@ -1,0 +1,13 @@
+{
+   "description": "Electronic fabric color database — research project on automated fabric color analysis（电子面料色彩数据库科研项目）",
+   "owner": {
+      "github_username": "ajUtHEPov6cXe7wV1OmdL",
+      "email": "方小同@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "gzx5418.github.io"
+      }
+   ]
+}
