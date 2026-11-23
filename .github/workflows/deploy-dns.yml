@@ -36,7 +36,7 @@ env:
 jobs:
   deploy:
     runs-on: self-hosted
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -137,7 +137,7 @@ jobs:
           PDNS_ZONE: ${{ secrets.PDNS_ZONE }}
           NOTIFY_ONLY: ${{ steps.range.outputs.has_changes != 'true' }}
         run: node .github/scripts/verify-pdns.js
-        timeout-minutes: 10
+        timeout-minutes: 12
 
       # 위 단계가 모두 성공했을 때만 마커를 전진시킨다.
       # 실패하거나 런이 취소되면 마커가 그대로 남아 다음 런이 같은 범위를 다시 배포한다(REPLACE는 멱등).

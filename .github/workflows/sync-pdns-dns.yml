@@ -39,7 +39,7 @@ permissions:
 jobs:
   sync:
     runs-on: self-hosted
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run || false }}
           DNS_PROBE_NAME: ${{ inputs.probe_name }}
         run: node .github/scripts/verify-pdns.js
-        timeout-minutes: 10
+        timeout-minutes: 12
 
   report-failure:
     needs: sync

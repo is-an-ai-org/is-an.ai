@@ -7,7 +7,7 @@ const path = require('node:path');
 const { verifyDns, notifySecondaries } = require('../scripts/verify-pdns.js');
 
 function fixture(t, options = {}) {
-  const calls = { get: 0, put: [], servers: new Set(), sleeps: 0 };
+  const calls = { get: 0, put: [], servers: new Set(), sleeps: 0, elapsed: 0 };
   const record = { name: 'www.is-an.ai.', type: 'A', records: [{ content: '192.0.2.10', disabled: false }] };
   const data = options.data || { serial: 10, rrsets: [record] };
   const client = {
@@ -19,7 +19,8 @@ function fixture(t, options = {}) {
   };
   const number = resolver => Number(resolver.getServers()[0].split('.').at(-1));
   t.mock.method(console, 'log', () => {});
-  t.mock.method(timers, 'setTimeout', async () => { calls.sleeps++; });
+  t.mock.method(Date, 'now', () => calls.elapsed);
+  t.mock.method(timers, 'setTimeout', async (ms) => { calls.sleeps++; calls.elapsed += ms; });
   t.mock.method(Resolver.prototype, 'resolve4', async function (name) {
     const ns = name.match(/^ns([1-5])\.he\.net$/);
     if (ns) return ['198.51.100.' + ns[1]];
@@ -74,9 +75,30 @@ test('stale serials and missing answers fail after a bounded retry window', asyn
     assert.match(error.message, /ns4.he.net: ENOTFOUND/);
     return true;
   });
-  assert.equal(calls.get, 60);
-  assert.equal(calls.sleeps, 59);
+  assert.equal(calls.get, 120);
+  assert.equal(calls.elapsed, 10 * 60 * 1000);
   assert.deepEqual(calls.put, []);
+});
+
+test('verification waits for lagging nameservers beyond five minutes', async t => {
+  const { client, calls } = fixture(t, {
+    serial: n => (n === 2 || n === 4) && calls.elapsed < 7 * 60 * 1000 ? 9 : 10,
+  });
+  await verifyDns(client, 'is-an.ai', 'www.is-an.ai', false);
+  assert.equal(calls.elapsed, 7 * 60 * 1000);
+  assert.equal(calls.servers.size, 5);
+  assert.deepEqual(calls.put, []);
+});
+
+test('slow DNS queries consume the propagation deadline', async t => {
+  const { client, calls } = fixture(t);
+  t.mock.method(Resolver.prototype, 'resolveSoa', async () => {
+    calls.elapsed += 2000;
+    return { serial: 9 };
+  });
+  await assert.rejects(verifyDns(client, 'is-an.ai', 'www.is-an.ai', false), /did not converge/);
+  assert.equal(calls.elapsed, 10 * 60 * 1000);
+  assert.ok(calls.get < 120);
 });
 
 test('matching SOA serial alone does not hide an incorrect record', async t => {
