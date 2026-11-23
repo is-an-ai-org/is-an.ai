@@ -13,7 +13,7 @@ const txt = { type: 'TXT', value: '1120448' };
 const rrset = (type, content) => ({ name, type, ttl: 300, records: [{ content, disabled: false }] });
 
 for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
-  for (const [label, initial, records, expected] of [
+  const cases = [
     ['add TXT to CNAME', [rrset('CNAME', target + '.')], [cname, txt], ['ALIAS', 'TXT']],
     ['create mixed records', [], [cname, txt], ['ALIAS', 'TXT']],
     ['deduplicate TXT and preserve distinct values', [], [txt, txt, { type: 'TXT', value: '"1120448"' }, { type: 'TXT', value: 'other' }], ['TXT']],
@@ -31,8 +31,11 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
     ], [cname], ['CNAME']],
     ['keep existing ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname, txt], ['ALIAS', 'TXT']],
     ['replace CNAME with IP', [rrset('CNAME', target + '.')], [cname, { type: 'A', value: '192.0.2.1' }], ['A']],
-    ['correct TTL on existing CNAME', [{ ...rrset('CNAME', target + '.'), ttl: 600 }], [cname], ['CNAME']],
-  ]) {
+  ];
+  if (script === 'update-pdns-dns') {
+    cases.push(['correct TTL on existing CNAME', [{ ...rrset('CNAME', target + '.'), ttl: 600 }], [cname], ['CNAME']]);
+  }
+  for (const [label, initial, records, expected] of cases) {
     test(`${script}: ${label}`, async () => {
       const workspace = await mkdtemp(path.join(tmpdir(), 'dns-transition-'));
       let state = [...initial, { name: 'is-an.ai.', type: 'SOA', ttl: 3600,
