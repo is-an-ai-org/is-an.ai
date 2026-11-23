@@ -36,6 +36,7 @@ const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d
 const IPV6_REGEX = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$/;
 const DOMAIN_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 const VENDOR_PATTERN = /^_([a-z0-9]+)\.[a-z0-9][a-z0-9.-]*$/;
+const DKIM_PATTERN = /^(.+)\._domainkey\.(.+)$/i;
 
 // --- Types ---
 
@@ -141,6 +142,18 @@ function isVendorSubdomain(name: string): boolean {
 function validateSubdomainName(name: string): string | null {
   if (name === "schema") return null; // skip schema.json
 
+  const dkim = name.match(DKIM_PATTERN);
+  if (dkim) {
+    const label = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+    if (
+      `${name}.is-an.ai`.length > 253 ||
+      dkim[1].split(".").some((part) => !label.test(part))
+    ) {
+      return "Invalid DKIM selector";
+    }
+    return validateBaseSubdomainName(dkim[2]);
+  }
+
   // Vendor subdomain pattern
   if (name.startsWith("_")) {
     if (!isVendorSubdomain(name)) {
@@ -178,7 +191,7 @@ function validateBaseSubdomainName(name: string): string | null {
   return null; // valid
 }
 
-function validateRecord(record: RecordDefinition, isVendor: boolean): string | null {
+function validateRecord(record: RecordDefinition, txtOnly: boolean): string | null {
   if (!record.type || !record.value) {
     return "Record must have type and value";
   }
@@ -189,9 +202,8 @@ function validateRecord(record: RecordDefinition, isVendor: boolean): string | n
     return `Unsupported record type: ${type}`;
   }
 
-  // Vendor subdomains only allow TXT
-  if (isVendor && type !== "TXT") {
-    return `Vendor verification subdomains only support TXT records, got ${type}`;
+  if (txtOnly && type !== "TXT") {
+    return `Verification subdomains only support TXT records, got ${type}`;
   }
 
   if (type === "MX") {
@@ -230,10 +242,14 @@ function validateRecord(record: RecordDefinition, isVendor: boolean): string | n
   return null;
 }
 
-function validateFileContent(content: RecordFileContent, filePath: string): string[] {
+async function validateFileContent(
+  content: RecordFileContent,
+  filePath: string,
+): Promise<string[]> {
   const errors: string[] = [];
   const subdomain = getSubdomainFromFilename(filePath);
-  const isVendor = isVendorSubdomain(subdomain);
+  const dkim = subdomain.match(DKIM_PATTERN);
+  const txtOnly = isVendorSubdomain(subdomain) || dkim !== null;
 
   // Validate subdomain name
   const nameError = validateSubdomainName(subdomain);
@@ -255,6 +271,17 @@ function validateFileContent(content: RecordFileContent, filePath: string): stri
     );
   }
 
+  if (dkim && !nameError && content.owner.email) {
+    const parent = await loadBaseFile(`records/${dkim[2]}.json`);
+    if (
+      parent.status !== "ok" ||
+      !parent.content.owner?.email ||
+      parent.content.owner.email.toLowerCase() !== content.owner.email.toLowerCase()
+    ) {
+      errors.push("DKIM record must have the same owner as an existing parent subdomain");
+    }
+  }
+
   // Validate description
   if (content.description !== undefined && typeof content.description === "string" && content.description.length > 100) {
     errors.push("Description exceeds 100 characters");
@@ -274,7 +301,7 @@ function validateFileContent(content: RecordFileContent, filePath: string): stri
 
   const seen = new Set<string>();
   for (let i = 0; i < content.record.length; i++) {
-    const recordError = validateRecord(content.record[i], isVendor);
+    const recordError = validateRecord(content.record[i], txtOnly);
     if (recordError) {
       errors.push(`Record ${i + 1}: ${recordError}`);
       continue;
@@ -318,11 +345,11 @@ type BaseFileResult =
   | { status: "error"; message: string };
 
 async function loadBaseFile(filePath: string): Promise<BaseFileResult> {
-  const { execSync } = await import("child_process");
+  const { execFileSync } = await import("child_process");
 
   let raw: string;
   try {
-    raw = execSync(`git show HEAD:${filePath}`, {
+    raw = execFileSync("git", ["show", `HEAD:${filePath}`], {
       encoding: "utf-8",
       cwd: WORKSPACE_PATH,
       stdio: ["ignore", "pipe", "pipe"],
@@ -372,7 +399,7 @@ async function validatePR(): Promise<void> {
       continue;
     }
 
-    const contentErrors = validateFileContent(content, file);
+    const contentErrors = await validateFileContent(content, file);
     for (const err of contentErrors) {
       errors.push({ file, message: err });
     }
@@ -406,7 +433,7 @@ async function validatePR(): Promise<void> {
       continue;
     }
 
-    const contentErrors = validateFileContent(content, file);
+    const contentErrors = await validateFileContent(content, file);
     for (const err of contentErrors) {
       errors.push({ file, message: err });
     }

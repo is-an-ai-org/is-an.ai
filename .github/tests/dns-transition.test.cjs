@@ -31,6 +31,7 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
     ], [cname], ['CNAME']],
     ['keep existing ALIAS', [rrset('ALIAS', target + '.'), rrset('TXT', '"1120448"')], [cname, txt], ['ALIAS', 'TXT']],
     ['replace CNAME with IP', [rrset('CNAME', target + '.')], [cname, { type: 'A', value: '192.0.2.1' }], ['A']],
+    ['correct TTL on existing CNAME', [{ ...rrset('CNAME', target + '.'), ttl: 600 }], [cname], ['CNAME']],
   ]) {
     test(`${script}: ${label}`, async () => {
       const workspace = await mkdtemp(path.join(tmpdir(), 'dns-transition-'));
@@ -95,6 +96,7 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         });
         await run();
         assert.deepEqual(state.filter(r => r.name === name).map(r => r.type).sort(), expected.sort());
+        assert.equal(state.find(r => r.name === name).ttl, 300);
         if (label.startsWith('deduplicate')) {
           const contents = state.find(r => r.name === name).records.map(r => r.content).sort();
           assert.deepEqual(contents, label.includes('TXT')
@@ -108,12 +110,14 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
               'out-of-zone records must not generate writes');
           }
         }
+        patches.length = 0;
+        const beforeNotify = notifies;
+        const beforeSoa = state.find(r => r.type === 'SOA').records[0].content;
+        await run();
+        assert.equal(patches.length, 0, 'replaying applied records must not write or advance SOA');
+        assert.equal(state.find(r => r.type === 'SOA').records[0].content, beforeSoa);
+        assert.equal(notifies, beforeNotify + 1, 'an unchanged zone must still notify secondaries');
         if (script === 'sync-pdns-dns') {
-          patches.length = 0;
-          const beforeNotify = notifies;
-          await run();
-          assert.equal(patches.length, 0, 'second full sync must have no changes');
-          assert.equal(notifies, beforeNotify + 1, 'an unchanged zone must still notify secondaries');
           await run({ DRY_RUN: 'true' });
           assert.equal(patches.length, 0, 'dry run must not write records');
           assert.equal(notifies, beforeNotify + 1, 'dry run must not send NOTIFY');
