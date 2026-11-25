@@ -36,6 +36,10 @@
     {
       "type": "TXT",
       "value": "v=spf1 include:zoho.in ~all"
+    },
+    {
+      "type": "TXT",
+      "value": "google-site-verification=mJoR6NUGDgZt0hC8xO-nD48tjppFzoNTX8Mxd2VaLlA"
     }
   ]
 }
