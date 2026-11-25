@@ -311,6 +311,28 @@ async function testSpecificRecord(
 
 // --- Main Execution ---
 
+async function testReplication(zone: string): Promise<void> {
+  const base = `/api/v1/servers/localhost/zones/${encodeURIComponent(zone)}`;
+  const [info, metadata, config] = await Promise.all([
+    pdnsClient.get<PdnsZoneInfo>(base, { params: { rrsets: false } }),
+    pdnsClient.get<{ metadata: string[] }>(`${base}/metadata/ALSO-NOTIFY`),
+    pdnsClient.get<{ name: string; value: string }[]>("/api/v1/servers/localhost/config"),
+  ]);
+  const settings = config.data.filter(({ name }) => [
+    "also-notify", "only-notify", "primary", "secondary",
+    "expand-alias", "outgoing-axfr-expand-alias", "resolver",
+    "allow-axfr-ips", "query-cache-ttl", "cache-ttl", "query-local-address",
+  ].includes(name));
+  console.log(JSON.stringify({
+    zone: info.data.name,
+    kind: info.data.kind,
+    serial: info.data.serial,
+    notified_serial: info.data.notified_serial,
+    zone_also_notify: metadata.data.metadata,
+    settings,
+  }, null, 2));
+}
+
 async function main(): Promise<void> {
   console.log("PowerDNS 테스트 스크립트\n");
   console.log(`API URL: ${PDNS_API_URL}`);
@@ -324,6 +346,8 @@ async function main(): Promise<void> {
     if (command === "list" || !command) {
       // 기본: 모든 존의 통계 출력
       await testTotalDomains();
+    } else if (command === "replication" && (args[1] || PDNS_ZONE)) {
+      await testReplication(args[1] || PDNS_ZONE);
     } else if (command === "zone" && args[1]) {
       // 특정 존 조회: node test-pdns.js zone grrr.site.
       await testSpecificZone(args[1]);
@@ -345,6 +369,7 @@ async function main(): Promise<void> {
       console.log("  node test-pdns.js                    # 모든 존 통계 출력");
       console.log("  node test-pdns.js list               # 모든 존 통계 출력");
       console.log("  node test-pdns.js zone <zone>        # 특정 존 상세 정보");
+      console.log("  node test-pdns.js replication <zone> # NOTIFY and transfer settings");
       console.log(
         "  node test-pdns.js record <zone> <subdomain> <type>  # 특정 레코드 조회"
       );
