@@ -1,0 +1,13 @@
+{
+   "description": "OwnBox 分站",
+   "owner": {
+      "github_username": "Qc_g0z_PvRFxa7Lf9gbnF",
+      "email": "Own@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "rusp896d.xqdcdn.cn"
+      }
+   ]
+}
