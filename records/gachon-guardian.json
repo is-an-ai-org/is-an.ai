@@ -1,0 +1,13 @@
+{
+   "description": "가천대학교 AX 챌린지 출품작\n시설 고장 수리 및 관리",
+   "owner": {
+      "github_username": "XsZ-FGmgeHOr8YMKvAr4f",
+      "email": "kspacen-lab@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "oqr5onj.gachon-guardian.fly.dev"
+      }
+   ]
+}
