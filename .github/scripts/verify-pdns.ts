@@ -103,8 +103,9 @@ export async function verifyDns(
   };
   let expected = await load();
   if (recover) await notifySecondaries(client, zone + ".");
+  const deadline = Date.now() + 10 * 60 * 1000;
   let failures: string[] = [];
-  for (let attempt = 1; attempt <= 60; attempt++) {
+  for (let attempt = 1; Date.now() < deadline; attempt++) {
     const results = await Promise.all(
       nameservers.map(async (nameserver) => {
         try {
@@ -144,12 +145,12 @@ export async function verifyDns(
       return;
     }
     console.log(
-      `Public DNS check ${attempt}/60 (primary serial ${expected.serial}, ${expected.type} ${probe}): ${failures.join("; ")}`,
+      `Public DNS check ${attempt} (primary serial ${expected.serial}, ${expected.type} ${probe}): ${failures.join("; ")}`,
     );
-    if (attempt < 60) {
-      await setTimeout(5000);
-      expected = await load();
-    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await setTimeout(Math.min(5000, remaining));
+    if (Date.now() < deadline) expected = await load();
   }
   throw new Error(`Public DNS did not converge: ${failures.join("; ")}`);
 }

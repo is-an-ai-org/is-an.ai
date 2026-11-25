@@ -6,8 +6,8 @@
    },
    "record": [
       {
-         "type": "AAAA",
-         "value": "2409:8a00:84d7:a920:34dd:30ff:fe80:5215"
+         "type": "CNAME",
+         "value": "cidpcn.v6.rocks"
       }
    ]
 }

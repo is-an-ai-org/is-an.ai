@@ -476,6 +476,7 @@ async function processChanges(): Promise<void> {
   ]);
 
   const normName = (n: string) => n.toLowerCase().replace(/\.$/, "");
+  const { byName } = await loadZoneSnapshot();
 
   const finalPayload = patchPayload.filter((item) => {
     const subdomain = normName(item.name).replace(`.${ZONE}`, "") || "@";
@@ -484,11 +485,19 @@ async function processChanges(): Promise<void> {
       console.log(`🛡️ Protected record filtered: ${item.name} (${item.type})`);
       return false;
     }
-    return true;
+    const existing = byName.get(item.name.toLowerCase())
+      ?.find((rrset) => rrset.type === item.type);
+    if (item.changetype === "DELETE") return existing !== undefined;
+    if (!existing || existing.ttl !== item.ttl) return true;
+    const contents = (records: PdnsApiGetRecord[]) => records
+      .map((record) => JSON.stringify([normalizeContent(item.type, record.content), record.disabled]))
+      .sort();
+    return JSON.stringify(contents(existing.records)) !== JSON.stringify(contents(item.records));
   });
 
   if (finalPayload.length === 0) {
-    console.log("✓ No changes after filtering protected domains.");
+    console.log("✓ DNS already matches requested records; preserving SOA serial.");
+    await notifySecondaries(pdnsClient, PDNS_ZONE);
     return;
   }
 
