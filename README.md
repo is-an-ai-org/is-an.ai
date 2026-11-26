@@ -63,6 +63,7 @@ Automated DNS synchronization keeps repository records in sync with PowerDNS:
 - **Every 15 minutes**: Read-only checks against all five HE public nameservers
 - **After deployment**: Verify the SOA serial and an enabled A/AAAA/CNAME probe against PowerDNS; stale or incorrect public answers fail the run
 - **Protected subdomains**: System subdomains (www, api, docs, ns1, etc.) are never deleted
+- **Primary hostname**: `ns1.is-an.ai` points to the hidden master at `43.200.222.34`, matching the SOA primary name
 
 To retry propagation without changing records or the SOA serial, run **Sync DNS Records (Full Sync)** with `notify_only=true` and `dry_run=false`.
 Set `probe_name` to the affected hostname, such as `barycenter.is-an.ai`; otherwise the probe is `www` in the managed zone.

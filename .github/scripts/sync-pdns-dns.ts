@@ -82,6 +82,7 @@ const DRY_RUN: boolean = process.env.DRY_RUN === "true";
 // Infrastructure records managed in code, always REPLACE'd during sync.
 // These are NOT in the records/ directory — they are system-owned.
 const INFRA_RECORDS: { subdomain: string; type: string; content: string; ttl?: number }[] = [
+  { subdomain: "ns1", type: "A", content: "43.200.222.34" },
   // Root domain (Cloudflare Pages)
   { subdomain: "@", type: "A", content: "172.67.69.118" },
   { subdomain: "@", type: "A", content: "104.26.0.194" },

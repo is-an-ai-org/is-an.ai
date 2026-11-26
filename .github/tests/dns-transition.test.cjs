@@ -121,6 +121,8 @@ for (const script of ['update-pdns-dns', 'sync-pdns-dns']) {
         assert.equal(state.find(r => r.type === 'SOA').records[0].content, beforeSoa);
         assert.equal(notifies, beforeNotify + 1, 'an unchanged zone must still notify secondaries');
         if (script === 'sync-pdns-dns') {
+          assert.deepEqual(state.find(r => r.name === 'ns1.is-an.ai.' && r.type === 'A').records,
+            [{ content: '43.200.222.34', disabled: false }]);
           await run({ DRY_RUN: 'true' });
           assert.equal(patches.length, 0, 'dry run must not write records');
           assert.equal(notifies, beforeNotify + 1, 'dry run must not send NOTIFY');
