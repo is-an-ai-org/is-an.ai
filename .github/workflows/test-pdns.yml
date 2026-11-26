@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       test_type:
-        description: "Test type (list, zone, record)"
+        description: "Test type (list, zone, record, replication)"
         required: false
         default: "list"
         type: choice
@@ -12,8 +12,9 @@ on:
           - list
           - zone
           - record
+          - replication
       zone:
-        description: "Zone name (for zone/record test)"
+        description: "Zone name (for zone/record/replication test)"
         required: false
         type: string
       subdomain:
@@ -58,6 +59,9 @@ jobs:
               ;;
             zone)
               node .github/scripts/test-pdns.js zone "$TEST_ZONE"
+              ;;
+            replication)
+              node .github/scripts/test-pdns.js replication "$TEST_ZONE"
               ;;
             record)
               if [ -n "${PDNS_ZONE:-}" ] && [ -z "$TEST_ZONE" ]; then
