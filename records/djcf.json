@@ -1,0 +1,13 @@
+{
+   "description": "blog",
+   "owner": {
+      "github_username": "63pmnR09QvX-kbr_Vp0mb",
+      "email": "Diana Sari@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "wordfie.pages.dev"
+      }
+   ]
+}
