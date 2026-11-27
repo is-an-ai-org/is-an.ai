@@ -1,0 +1,13 @@
+{
+   "description": "Some of these projects are intended for testing; it would be even better if they could be hosted on CF!",
+   "owner": {
+      "github_username": "63pmnR09QvX-kbr_Vp0mb",
+      "email": "Diana Sari@noreply.com"
+   },
+   "record": [
+      {
+         "type": "CNAME",
+         "value": "wordfie.pages.dev"
+      }
+   ]
+}
